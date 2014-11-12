@@ -21,14 +21,18 @@ public class FancyMessageFormatConverter {
 
 	public static final char tagStart = '[';
 	public static final char tagEnd = ']';
+	public static final char tagClose = '/';
+	public static FancyMessageFormatConverter instance = null;
 	
 	/** The special character that prefixes all chat formatting codes. */
 	final char SIMPLE_FORMAT_CHAR = '\u00A7';
 
 	/** Lookup table for all continuous tags (marked by []) */
-	public static HashMap<String, SimpleMessageTag> bracketTagList = new HashMap<String, SimpleMessageTag>();
+	public HashMap<String, SimpleMessageTag> bracketTagList;
 
-	static {
+	// private constructor + static getInstance() method to make this class singleton
+	private FancyMessageFormatConverter() {
+		bracketTagList = new HashMap<String, SimpleMessageTag>();
 		// Enlist all possible bracket-tags
 		// (They go into a HashMap for lookup purposes)
 		for(Color color : Color.values()) {
@@ -40,9 +44,18 @@ public class FancyMessageFormatConverter {
 			for(String tag : format.getTags()) {
 				bracketTagList.put(tag, format);
 			}
+			format.setClosing(true);
+			for(String tag : format.getTags()) {
+				bracketTagList.put(FancyMessageFormatConverter.tagClose + tag, format);
+			}
 		}
+	}	
+	public static FancyMessageFormatConverter getInstance() {
+		if(instance == null) {
+			instance = new FancyMessageFormatConverter();
+		}
+		return instance;
 	}
-	
 	
 	// convertToJSON("My \n != [break] Message")
 	
@@ -69,24 +82,104 @@ public class FancyMessageFormatConverter {
 	 *  "Any... \nthat... \nAt...
 	 */
 	
-	
-	public static String convertToJSON(final String line) {
-		List<String> list = new ArrayList<String>();
-		list.add(line);
-		return convertToJSON(list);
+	public String convertToJSON(final String line) {
+		return convertToJSON(Arrays.asList(line));
 	}
 	
-	public static String convertToJSON(final List<String> inputLines) {
+	// TODO [esc] support for full function
+	public String convertToJSON(final List<String> inputLines) {
+		List<InteractiveMessagePart> message = new ArrayList<InteractiveMessagePart>();
+		
+		// Split lines at line breaks
+		// In the end we will have a list with one line per element
 		ArrayList<String> lines = new ArrayList<>();
 		for(String line : inputLines) {
-			// Split lines at line breaks
-			// In the end we will have a list with one line per element
 			lines.addAll(Arrays.asList(line.split("\\r?\\n")));
+		}
+
+		// Remove any special lines at the start (a real text line should be first)
+		while(!lines.isEmpty() && hasSpecialTag(lines.get(0))) {
+			lines.remove(0);
+		}
+		
+		Color currentColor = null;
+		Set<FormatType> currentFormatting = new HashSet<FormatType>();
+		while(!lines.isEmpty()) {
+			// parts that have different formatting/text but the same hover/click effects
+			List<InteractiveMessagePart> messageParts = new ArrayList<InteractiveMessagePart>();
+			String line = lines.get(0);
+			// hover/click line
+			if(hasSpecialTag(line)) {
+				if(!messageParts.isEmpty()) {
+					// TODO detect which hover/click action it is and apply it to all parts from the messageParts list
+				} else {
+					// remove special lines that appear before any text line is given
+					lines.remove(0);
+				}
+			} 
+			// text line
+			else {
+				// Split into pieces at places where formatting changes
+				while(!line.isEmpty()) {
+					int formatPosition = getNextTagPosition(line);
+					String toAdd = null;
+					boolean handleFormatTag = false;
+					if(formatPosition == -1) {
+						toAdd = line;
+						line = "";
+
+					} else {
+						toAdd = line.substring(0, formatPosition-1);
+						line = line.substring(formatPosition);			
+						handleFormatTag = true;
+					}
+					if(!toAdd.isEmpty()) {
+						InteractiveMessagePart part = new InteractiveMessagePart(toAdd);
+						part.addFormatting(currentFormatting);
+						part.color = currentColor;
+						messageParts.add(part);						
+					}
+					if(handleFormatTag) {
+						// Handle the formatting tag
+						SimpleMessageTag tag = null;
+						char[] characters = line.toCharArray();
+						// Get the actual tag (search the start and retrieve from map)
+						for(int i=0; i<characters.length; i++) {
+							if(characters[i] == FancyMessageFormatConverter.tagEnd) {
+								// make sure that there is something inside the tag, [] is nothing
+								if(i >= 2) {
+									String tagText = line.substring(1, i-1);
+									// Check if it is a valid tag
+									tag = bracketTagList.get(tagText.toLowerCase());
+									if(line.length() > i) {
+										line = line.substring(i+1);
+									} else {
+										line = "";
+									}
+								}
+							}
+						}
+						if(tag instanceof Color) {
+							currentColor = (Color)tag;
+						} else if (tag instanceof FormatType) {
+							FormatType formatType = (FormatType)tag;
+							// Check if it is a starting or closing tag
+							if(formatType.closing) {
+								// TODO check if this fails because of different inner variable 'closing'
+								currentFormatting.remove(formatType);
+							} else {
+								currentFormatting.add(formatType);
+							}
+						}
+					}
+				}				
+			}	
+			
+			message.addAll(messageParts);			
 		}
 		
 		
-		List<InteractiveMessagePart> message = new ArrayList<InteractiveMessagePart>();
-				
+		
 		for(String line : lines) {
 			//
 			
@@ -107,7 +200,7 @@ public class FancyMessageFormatConverter {
 	 * @param line The line you want to get the first tag from
 	 * @return The first tag occurring in the line or if none are there null
 	 */
-	private static int getNextTagPosition(String line) {
+	private int getNextTagPosition(String line) {
 		char[] characters = line.toCharArray();
 		// search the front of a tag
 		for(int i=0; i<characters.length; i++) {
@@ -131,21 +224,23 @@ public class FancyMessageFormatConverter {
 	}
 	
 	
-	private String getSpecialTag(String line) {
-		String trimmedLine = line.trim();
+	/**
+	 * Check if the specified line is just text or a special formatting line
+	 * @param line The line that should be checked
+	 * @return true if the line is a special line, false if it is just text
+	 */
+	private boolean hasSpecialTag(String line) {
+		// Remove leading whitespace
+		String trimmedLine = line.replaceAll("^\\s+", "");
 		
 		for(ClickType clickType : ClickType.values()) {
 			for(String tag : clickType.getTags()) {
-				if(trimmedLine.startsWith(clickType.jsonKey)) {
-					
+				if(trimmedLine.startsWith(tag)) {
+					return true;
 				}
 			}
 		}
-		
-		
-		
-		
-		return "";		
+		return false;		
 	}
 
 
@@ -164,6 +259,9 @@ public class FancyMessageFormatConverter {
 			for(FormatType type : types) {
 				formatTypes.add(type);
 			}
+		}
+		public void addFormatting(Collection<FormatType> types) {
+			formatTypes.addAll(types);
 		}
 		
 		/**
@@ -247,10 +345,8 @@ public class FancyMessageFormatConverter {
 		public char getNativeFormattingCode() {
 			return bytecode;
 		}
-
 	}
 	
-
 	static enum FormatType implements SimpleMessageTag {
 		BOLD('l', "bold", "b", "bold"),
 		ITALIC('o', "italic", "i", "italic"),
@@ -261,6 +357,7 @@ public class FancyMessageFormatConverter {
 		final char bytecode;
 		final String jsonKey;
 		final String[] tags;
+		boolean closing = false;
 
 		FormatType(char bytecode, String jsonKey, String... tags) {
 			this.bytecode = bytecode;
@@ -271,6 +368,10 @@ public class FancyMessageFormatConverter {
 		@Override
 		public String[] getTags() {
 			return tags;
+		}
+		
+		public void setClosing(boolean closing) {
+			this.closing = closing;
 		}
 
 		@Override
