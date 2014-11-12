@@ -56,32 +56,8 @@ public class FancyMessageFormatConverter {
 		}
 		return instance;
 	}
-	
-	// convertToJSON("My \n != [break] Message")
-	
-	/*
-	 * "Any text with [TAG] formatting
-	 *  that spreads accross multiple lines.
-	 *      hover: the second line has a hover
-	 *  At the end of every line (even tough you cannot
-	 *  see it here) you will find a line break (\n).  "
-	 *  
-	 *  "This is another line"
-	 *  "    hover: The 5th line is above me. Is also hovers"
-	 *  "Another line"
-	 *  
-	 *  ->
-	 *  "Any..."
-	 *  "that..."
-	 *  "At..."
-	 *  "see.."
-	 *  "This..."
-	 *  
-	 *  ->
-	 *  
-	 *  "Any... \nthat... \nAt...
-	 */
-	
+
+	// Wrapper to allow one string as parameter
 	public String convertToJSON(final String line) {
 		return convertToJSON(Arrays.asList(line));
 	}
@@ -173,25 +149,13 @@ public class FancyMessageFormatConverter {
 						}
 					}
 				}				
-			}	
-			
+			}				
 			message.addAll(messageParts);			
 		}
 		
 		
+		// TODO Convert to JSON string and return it
 		
-		for(String line : lines) {
-			//
-			
-			int nextTagPosition = getNextTagPosition(line);
-			
-		}
-		
-		
-		// TextMessagePart.toJSON(); {text="text",bold=true}
-		// return {extra=[{messagePart},{messagePart2}]}
-		
-
 		return "";
 	}
 	
