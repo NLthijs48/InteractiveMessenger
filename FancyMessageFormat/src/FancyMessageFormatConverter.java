@@ -12,60 +12,71 @@ import java.util.Set;
  * messages in the FancyMessageFormat to Minecraft's bulky tellraw
  * format.
  *
- * TODO: Choose license (MIT License?)
- *
  * @author NLThijs48
- * @author Tobias aka Phoenix
+ * @author Tobias aka Phoenix | http://www.phoenix-iv.de
  */
 public class FancyMessageFormatConverter {
 
-	public static final char tagStart = '[';
-	public static final char tagEnd = ']';
-	public static final char tagClose = '/';
-	public static FancyMessageFormatConverter instance = null;
-	
-	/** The special character that prefixes all chat formatting codes. */
-	final char SIMPLE_FORMAT_CHAR = '\u00A7';
+	private static final char TAG_BEFORE = '[';
+	private static final char TAG_AFTER  = ']';
+	private static final char END_TAG_INDICATOR = '/';
+
+	/** The special character that prefixes all basic chat formatting codes. */
+	private static final char SIMPLE_FORMAT_CHAR = '\u00A7';
 
 	/** Lookup table for all continuous tags (marked by []) */
-	public HashMap<String, SimpleMessageTag> bracketTagList;
+	private static final HashMap<String, Tag> BRACKET_TAG_LIST  = new HashMap<String, Tag>();
 
-	// private constructor + static getInstance() method to make this class singleton
-	private FancyMessageFormatConverter() {
-		bracketTagList = new HashMap<String, SimpleMessageTag>();
-		// Enlist all possible bracket-tags
+	/** Lookup table for all interactive tags */
+	private static final HashMap<String, Tag> INTERACTIVE_TAG_LIST  = new HashMap<String, Tag>();
+
+	static {
+		// Enlist all possible tags
 		// (They go into a HashMap for lookup purposes)
-		for(Color color : Color.values()) {
-			for(String tag : color.getTags()) {
-				bracketTagList.put(tag, color);
-			}
-		}
-		for(FormatType format : FormatType.values()) {
-			for(String tag : format.getTags()) {
-				bracketTagList.put(tag, format);
-			}
-			format.setClosing(true);
-			for(String tag : format.getTags()) {
-				bracketTagList.put(FancyMessageFormatConverter.tagClose + tag, format);
-			}
-		}
-	}	
-	public static FancyMessageFormatConverter getInstance() {
-		if(instance == null) {
-			instance = new FancyMessageFormatConverter();
-		}
-		return instance;
+		cacheTags(Color.class, BRACKET_TAG_LIST);
+		cacheTags(FormatType.class, BRACKET_TAG_LIST);
+		cacheTags(FormatCloseTag.class, BRACKET_TAG_LIST);
+		// Interactive tags
+		cacheTags(ClickType.class, BRACKET_TAG_LIST);
+		cacheTags(HoverType.class, BRACKET_TAG_LIST);
 	}
+
+
+	/**
+	 * Puts all constants in the given Tag class into the given lookup table.
+	 */
+	private static <T extends Tag> void cacheTags(Class<T> tags, HashMap<String, Tag> tagList) {
+		for (Tag tag : tags.getEnumConstants()) {
+			for(String key : tag.getTags()) {
+				tagList.put(key, tag);
+			}
+		}
+	}
+
+
+
+
+
+	// TODO Maybe copy (parts of) the "quote" function of Jettison for JSON escaping?
+	// http://grepcode.com/file/repo1.maven.org/maven2/org.codehaus.jettison/jettison/1.3.3/org/codehaus/jettison/json/JSONObject.java#945
+
+
+
+
+
+	// ------------------------------------------------------------------------------------------
+	// -------------------------------     Public / Interface     -------------------------------
+	// ------------------------------------------------------------------------------------------
+
 
 	// Wrapper to allow one string as parameter
 	public String convertToJSON(final String line) {
 		return convertToJSON(Arrays.asList(line));
 	}
-	
-	// TODO [esc] support for full function
-	public String convertToJSON(final List<String> inputLines) {
-		List<InteractiveMessagePart> message = new ArrayList<InteractiveMessagePart>();
-		
+
+
+	public String convertToJSON(final Iterable<String> inputLines) {
+
 		// Split lines at line breaks
 		// In the end we will have a list with one line per element
 		ArrayList<String> lines = new ArrayList<>();
@@ -74,205 +85,318 @@ public class FancyMessageFormatConverter {
 		}
 
 		// Remove any special lines at the start (a real text line should be first)
-		while(!lines.isEmpty() && hasSpecialTag(lines.get(0))) {
+		while(!lines.isEmpty() && isInteractiveTag(lines.get(0))) {
 			lines.remove(0);
 		}
-		
+
+		List<InteractiveMessagePart> message = new ArrayList<InteractiveMessagePart>();
+		message.add(new InteractiveMessagePart());
+
 		Color currentColor = null;
 		Set<FormatType> currentFormatting = new HashSet<FormatType>();
-		while(!lines.isEmpty()) {
-			// parts that have different formatting/text but the same hover/click effects
-			List<InteractiveMessagePart> messageParts = new ArrayList<InteractiveMessagePart>();
-			String line = lines.get(0);
-			// hover/click line
-			if(hasSpecialTag(line)) {
-				if(!messageParts.isEmpty()) {
-					// TODO detect which hover/click action it is and apply it to all parts from the messageParts list
-				} else {
-					// remove special lines that appear before any text line is given
-					lines.remove(0);
-				}
-			} 
-			// text line
-			else {
-				// Split into pieces at places where formatting changes
-				while(!line.isEmpty()) {
-					int formatPosition = getNextTagPosition(line);
-					String toAdd = null;
-					boolean handleFormatTag = false;
-					if(formatPosition == -1) {
-						toAdd = line;
-						line = "";
 
-					} else {
-						toAdd = line.substring(0, formatPosition-1);
-						line = line.substring(formatPosition);			
-						handleFormatTag = true;
-					}
-					if(!toAdd.isEmpty()) {
-						InteractiveMessagePart part = new InteractiveMessagePart(toAdd);
-						part.addFormatting(currentFormatting);
-						part.color = currentColor;
-						messageParts.add(part);						
-					}
-					if(handleFormatTag) {
-						// Handle the formatting tag
-						SimpleMessageTag tag = null;
-						char[] characters = line.toCharArray();
-						// Get the actual tag (search the start and retrieve from map)
-						for(int i=0; i<characters.length; i++) {
-							if(characters[i] == FancyMessageFormatConverter.tagEnd) {
-								// make sure that there is something inside the tag, [] is nothing
-								if(i >= 2) {
-									String tagText = line.substring(1, i-1);
-									// Check if it is a valid tag
-									tag = bracketTagList.get(tagText.toLowerCase());
-									if(line.length() > i) {
-										line = line.substring(i+1);
-									} else {
-										line = "";
-									}
-								}
-							}
-						}
-						if(tag instanceof Color) {
-							currentColor = (Color)tag;
-						} else if (tag instanceof FormatType) {
-							FormatType formatType = (FormatType)tag;
-							// Check if it is a starting or closing tag
-							if(formatType.closing) {
-								// TODO check if this fails because of different inner variable 'closing'
-								currentFormatting.remove(formatType);
-							} else {
-								currentFormatting.add(formatType);
-							}
-						}
-					}
-				}				
-			}				
-			message.addAll(messageParts);			
+		for (String line : lines) {
+			InteractiveMessagePart messagePart;
+			TaggedContent interactive = getInteractiveTag(line);
+			if (interactive != null) {
+				messagePart = message.get(message.size() - 1);
+				// TODO Apply tag
+			} else {
+				// New text line
+				messagePart = new InteractiveMessagePart();
+				message.add(messagePart);
+				// TODO Search for inline tags and apply them
+			}
 		}
+
+
+//		while(!lines.isEmpty()) {
+//			// parts that have different formatting/text but the same hover/click effects
+//			List<InteractiveMessagePart> messageParts = new ArrayList<InteractiveMessagePart>();
+//			String line = lines.get(0);
+//			// hover/click line
+//			if(hasSpecialTag(line)) {
+//				if(!messageParts.isEmpty()) {
+//					// TODO detect which hover/click action it is and apply it to all parts from the messageParts list
+//				} else {
+//					// remove special lines that appear before any text line is given
+//					lines.remove(0);
+//				}
+//			} 
+//			// text line
+//			else {
+//				// Split into pieces at places where formatting changes
+//				while(!line.isEmpty()) {
+//					int formatPosition = getNextTagPosition(line);
+//					String toAdd = null;
+//					boolean handleFormatTag = false;
+//					if(formatPosition == -1) {
+//						toAdd = line;
+//						line = "";
+//
+//					} else {
+//						toAdd = line.substring(0, formatPosition-1);
+//						line = line.substring(formatPosition);			
+//						handleFormatTag = true;
+//					}
+//					if(!toAdd.isEmpty()) {
+//						InteractiveMessagePart part = new InteractiveMessagePart(toAdd);
+//						part.addFormatting(currentFormatting);
+//						part.color = currentColor;
+//						messageParts.add(part);						
+//					}
+//					if(handleFormatTag) {
+//						// Handle the formatting tag
+//						ContinuousTag tag = null;
+//						char[] characters = line.toCharArray();
+//						// Get the actual tag (search the start and retrieve from map)
+//						for(int i=0; i<characters.length; i++) {
+//							if(characters[i] == FancyMessageFormatConverter.tagEnd) {
+//								// make sure that there is something inside the tag, [] is nothing
+//								if(i >= 2) {
+//									String tagText = line.substring(1, i-1);
+//									// Check if it is a valid tag
+//									tag = bracketTagList.get(tagText.toLowerCase());
+//									if(line.length() > i) {
+//										line = line.substring(i+1);
+//									} else {
+//										line = "";
+//									}
+//								}
+//							}
+//						}
+//						if(tag instanceof Color) {
+//							currentColor = (Color)tag;
+//						} else if (tag instanceof FormatType) {
+//							FormatType formatType = (FormatType)tag;
+//							// Check if it is a starting or closing tag
+//							if(formatType.closing) {
+//								// TODO check if this fails because of different inner variable 'closing'
+//								currentFormatting.remove(formatType);
+//							} else {
+//								currentFormatting.add(formatType);
+//							}
+//						}
+//					}
+//				}				
+//			}				
+//			message.addAll(messageParts);			
+//		}
+		
 		
 		
 		// TODO Convert to JSON string and return it
-		
 		return "";
 	}
-	
+
+
+
+
+
+	// ------------------------------------------------------------------------------------------
+	// -------------------------------     Private functions      -------------------------------
+	// ------------------------------------------------------------------------------------------
+
+
+//	/**
+//	 * Get the next tag that occurs in the line
+//	 * @param line The line you want to get the first tag from
+//	 * @return The first tag occurring in the line or if none are there null
+//	 */
+//	private int getNextTagPosition(String line) {
+//		char[] characters = line.toCharArray();
+//		// search the front of a tag
+//		for(int i=0; i<characters.length; i++) {
+//			if(characters[i] == FancyMessageFormatConverter.TAG_BEFORE) {
+//				// search the end of the tag
+//				for(int j=i+1; j<characters.length; j++) {
+//					if(characters[j] == FancyMessageFormatConverter.TAG_AFTER) {
+//						// make sure that there is something inside the tag, [] is nothing
+//						if(j-i > 2) {
+//							String tagText = line.substring(i+1, j-1);
+//							// Check if it is a valid tag
+//							if(BRACKET_TAG_LIST.get(tagText.toLowerCase()) != null) {
+//								return i;
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}
+//		return -1;
+//	}
+
+
+//	/**
+//	 * Check if the specified line is just text or a special formatting line
+//	 * @param line The line that should be checked
+//	 * @return true if the line is a special line, false if it is just text
+//	 */
+//	private boolean hasSpecialTag(String line) {
+//		// Remove leading whitespace
+//		String trimmedLine = line.replaceAll("^\\s+", "");
+//		
+//		for(ClickType clickType : ClickType.values()) { // TODO Misses hover
+//			for(String tag : clickType.getTags()) {
+//				if(trimmedLine.startsWith(tag)) { // TODO Case-insensitive
+//					return true;
+//				}
+//			}
+//		}
+//		return false;		
+//	}
+
+
 	/**
-	 * Get the next tag that occurs in the line
-	 * @param line The line you want to get the first tag from
-	 * @return The first tag occurring in the line or if none are there null
+	 * Searches and returns the first continuous tag found in the given String.
+	 * @return The tag (plus its preceding and subsequent content) if found.
+	 *         Null if nothing is found.
 	 */
-	private int getNextTagPosition(String line) {
-		char[] characters = line.toCharArray();
-		// search the front of a tag
-		for(int i=0; i<characters.length; i++) {
-			if(characters[i] == FancyMessageFormatConverter.tagStart) {
-				// search the end of the tag
-				for(int j=i+1; j<characters.length; j++) {
-					if(characters[j] == FancyMessageFormatConverter.tagEnd) {
-						// make sure that there is something inside the tag, [] is nothing
-						if(j-i > 2) {
-							String tagText = line.substring(i+1, j-1);
-							// Check if it is a valid tag
-							if(bracketTagList.get(tagText.toLowerCase()) != null) {
-								return i;
-							}
-						}
+	private static TaggedContent getNextTag(String line) {
+		for (int startIndex = 0; startIndex < line.length(); startIndex++) {
+			int start = line.indexOf(TAG_BEFORE, startIndex);
+			if (start != -1) {
+				int end = line.indexOf(TAG_AFTER, start);
+				if (end != -1) {
+					String inBetween = line.substring(start+1, end).toLowerCase();
+					if (BRACKET_TAG_LIST.containsKey(inBetween)) {
+						String previousContent = line.substring(0, start);
+						Tag tag = BRACKET_TAG_LIST.get(inBetween);
+						String subsequentContent = line.substring(end + 1);
+						return new TaggedContent(previousContent, tag, subsequentContent);
+					} else {
+						startIndex = start + 1;
 					}
+				} else {
+					return null;
 				}
+			} else {
+				return null;
 			}
 		}
-		return -1;
+		return null;
 	}
-	
-	
+
+
 	/**
-	 * Check if the specified line is just text or a special formatting line
-	 * @param line The line that should be checked
-	 * @return true if the line is a special line, false if it is just text
+	 * If the given line defines an interactive property (e.g. "hover: myText")
+	 * the tag / property will be returned. Otherwise null is returned.
 	 */
-	private boolean hasSpecialTag(String line) {
-		// Remove leading whitespace
-		String trimmedLine = line.replaceAll("^\\s+", "");
-		
-		for(ClickType clickType : ClickType.values()) {
-			for(String tag : clickType.getTags()) {
-				if(trimmedLine.startsWith(tag)) {
-					return true;
+	private static TaggedContent getInteractiveTag(String line) {
+		for (int index = 0; index < line.length(); index++) {
+			char c = line.charAt(index);
+			if (c == ' ' || c == '\t') {
+				// Ignore (Skip spacing)
+			} else {
+				int end = line.indexOf(": ", index);
+				String inBetween = line.substring(index, end).toLowerCase();
+				if (INTERACTIVE_TAG_LIST.containsKey(inBetween)) {
+					Tag tag = INTERACTIVE_TAG_LIST.get(inBetween);
+					String subsequentContent = line.substring(end + 2);
+					return new TaggedContent(null, tag, subsequentContent);
 				}
 			}
 		}
-		return false;		
+		return null;
 	}
 
 
-	private class TextMessagePart {
+	private static boolean isInteractiveTag(String line) {
+		return getInteractiveTag(line) != null;
+	}
+
+
+
+
+
+	// ------------------------------------------------------------------------------------------
+	// -------------------------------       Helper classes       -------------------------------
+	// ------------------------------------------------------------------------------------------
+
+
+	private static class TaggedContent {
+		final String precedingContent;
+		final Tag tag;
+		final String subsequentContent;
+
+		public TaggedContent(String pre, Tag tag, String sub) {
+			this.precedingContent = pre;
+			this.tag = tag;
+			this.subsequentContent = sub;
+		}
+
+		public boolean noPreContent() {
+			return precedingContent.isEmpty();
+		}
+	}
+
+
+	/**
+	 * Holds a string with basic (non-interactive) formatting.
+	 */
+	private static class TextMessagePart {
 		String text = "";
 		Color color = Color.WHITE;
-		
-		Set<FormatType> formatTypes;
-		
-		public TextMessagePart(String text) {
-			formatTypes = new HashSet<FormatType>();
-			this.text = text;
-		}
-		
-		public void addFormatting(FormatType... types) {
-			for(FormatType type : types) {
-				formatTypes.add(type);
-			}
-		}
-		public void addFormatting(Collection<FormatType> types) {
-			formatTypes.addAll(types);
-		}
-		
+
+		Set<FormatType> formatTypes = new HashSet<FormatType>();
+
 		/**
-		 * C
+		 * Converts this message into a MC-JSON array.
 		 */
 		String toJSON() {
+			// TODO Create JSON array
 			return "";
-			// TODO
 		}
 	}
-	
-	private class InteractiveMessagePart extends TextMessagePart {
+
+
+	/**
+	 * Holds a string with interactive formatting.
+	 */
+	private static class InteractiveMessagePart extends TextMessagePart {
 		ClickType clickType = null;		
 		String clickContent = "";
+		ArrayList<TextMessagePart> hover = new ArrayList<TextMessagePart>();
 
-		List<TextMessagePart> hover = new ArrayList<TextMessagePart>();
-		
-		public InteractiveMessagePart(String text) {
-			super(text);
-		}
-		
 		@Override
 		String toJSON() {
-			// TODO
-			// Creates a single JSON array, which can be added in the "extra" section
-			// of our main array
+			// TODO Create JSON array
 			return "";
 		}
 	}
-	
-	
-	// --------------------------------- Tags ---------------------------------
+
+
+
+	// --------------------------------------- Tags ---------------------------------------
+
 
 	interface Tag {
 		String[] getTags();
 	}
 
-	interface SimpleMessageTag extends Tag {
-		/** The character that defines upcoming formatting in a native (non-JSON) message. */
+
+	/**
+	 * Indicates formatting that is applied until explicitly stopped.
+	 * Can also be used in simple Minecraft messages (Non-JSON).
+	 */
+	interface ContinuousTag extends Tag {
+		/**
+		 * The character that defines upcoming formatting in a native (non-JSON) Minecraft message.
+		 */
 		char getNativeFormattingCode();
 	}
 
+
+	/**
+	 * Indicates formatting that allows cursor interaction. Requires the
+	 * Minecraft JSON / tellraw format.
+	 */
 	interface InteractiveMessageTag extends Tag {
 		String getJsonKey();
 	}
-	
-	static enum Color implements SimpleMessageTag {
+
+
+	static enum Color implements ContinuousTag {
 		WHITE('f'),
 		BLACK('0'),
 		BLUE('9'),
@@ -289,11 +413,11 @@ public class FancyMessageFormatConverter {
 		GOLD('6'),
 		GRAY('7'),
 		DARK_GRAY('8');
-		
+
 		final char bytecode;
 		final String jsonKey;
 		final String[] tags;
-		
+
 		private Color(char bytecode) {
 			this.bytecode = bytecode;
 			this.jsonKey = this.name().toLowerCase();
@@ -304,14 +428,15 @@ public class FancyMessageFormatConverter {
 		public String[] getTags() {
 			return tags;
 		}
-		
+
 		@Override
 		public char getNativeFormattingCode() {
 			return bytecode;
 		}
 	}
-	
-	static enum FormatType implements SimpleMessageTag {
+
+
+	static enum FormatType implements ContinuousTag {
 		BOLD('l', "bold", "b", "bold"),
 		ITALIC('o', "italic", "i", "italic"),
 		UNDERLINE('n', "underlined", "u", "underline"),
@@ -321,7 +446,6 @@ public class FancyMessageFormatConverter {
 		final char bytecode;
 		final String jsonKey;
 		final String[] tags;
-		boolean closing = false;
 
 		FormatType(char bytecode, String jsonKey, String... tags) {
 			this.bytecode = bytecode;
@@ -333,24 +457,69 @@ public class FancyMessageFormatConverter {
 		public String[] getTags() {
 			return tags;
 		}
-		
-		public void setClosing(boolean closing) {
-			this.closing = closing;
-		}
 
 		@Override
 		public char getNativeFormattingCode() {
 			return bytecode;
 		}
+
 	}
-	
+
+
+	static enum FormatCloseTag implements Tag {
+		BOLD_END(FormatType.BOLD),
+		ITALIC_END(FormatType.ITALIC),
+		UNDERLINE_END(FormatType.UNDERLINE),
+		STRIKETHROUGH_END(FormatType.STRIKETHROUGH),
+		OBFUSCATE_END(FormatType.OBFUSCATE);
+
+		/** Formatting that is stopped at this point */
+		final FormatType closes;
+		final String[] tags;
+
+		private FormatCloseTag(FormatType openingTag) {
+			this.closes = openingTag;
+
+			// Auto-generate close tags
+			tags = new String[closes.tags.length];
+			for (int i = 0; i < tags.length; i++) {
+				tags[i] = END_TAG_INDICATOR + closes.tags[i];
+			}
+		}
+
+		@Override
+		public String[] getTags() {
+			return tags;
+		}
+
+	}
+
+
+	static enum ControlTag implements Tag {
+		BREAK("break"),
+		ESCAPE("esc");
+
+		final String[] tags;
+
+		private ControlTag(String... tags) {
+			this.tags = tags;
+		}
+
+		@Override
+		public String[] getTags() {
+			return tags;
+		}
+		
+	}
+
+
 	/**
 	 * Types of clicking
 	 */
 	static enum ClickType implements InteractiveMessageTag {
-		LINK("open_url", "link: "),
-		COMMAND("run_command", "command: "),
-		SUGGEST("suggest_command", "suggest: ");
+		LINK("open_url", "link"),
+		COMMAND("run_command", "command"),
+		SUGGEST("suggest_command", "suggest");
 
 		final String jsonKey;
 		final String[] tags;
@@ -371,12 +540,13 @@ public class FancyMessageFormatConverter {
 		}
 	}
 
+
 	static enum HoverType implements InteractiveMessageTag {
 		HOVER;
 
 		@Override
 		public String[] getTags() {
-			return new String[] {"hover: "};
+			return new String[] {"hover"};
 		}
 
 		@Override
@@ -384,6 +554,5 @@ public class FancyMessageFormatConverter {
 			return "hoverEvent";
 		}
 	}
-	
-	
+
 }
