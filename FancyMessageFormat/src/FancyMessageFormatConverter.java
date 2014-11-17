@@ -1,9 +1,7 @@
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -37,8 +35,8 @@ public class FancyMessageFormatConverter {
 		cacheTags(FormatType.class, BRACKET_TAG_LIST);
 		cacheTags(FormatCloseTag.class, BRACKET_TAG_LIST);
 		// Interactive tags
-		cacheTags(ClickType.class, BRACKET_TAG_LIST);
-		cacheTags(HoverType.class, BRACKET_TAG_LIST);
+		cacheTags(ClickType.class, INTERACTIVE_TAG_LIST);
+		cacheTags(HoverType.class, INTERACTIVE_TAG_LIST);
 	}
 
 
@@ -67,8 +65,7 @@ public class FancyMessageFormatConverter {
 	// ------------------------------------------------------------------------------------------
 	// -------------------------------     Public / Interface     -------------------------------
 	// ------------------------------------------------------------------------------------------
-
-
+	
 	// Wrapper to allow one string as parameter
 	public String convertToJSON(final String line) {
 		return convertToJSON(Arrays.asList(line));
@@ -76,7 +73,6 @@ public class FancyMessageFormatConverter {
 
 
 	public String convertToJSON(final Iterable<String> inputLines) {
-
 		// Split lines at line breaks
 		// In the end we will have a list with one line per element
 		ArrayList<String> lines = new ArrayList<>();
@@ -95,94 +91,121 @@ public class FancyMessageFormatConverter {
 		Color currentColor = null;
 		Set<FormatType> currentFormatting = new HashSet<FormatType>();
 
-		for (String line : lines) {
-			InteractiveMessagePart messagePart;
-			TaggedContent interactive = getInteractiveTag(line);
-			if (interactive != null) {
-				messagePart = message.get(message.size() - 1);
-				// TODO Apply tag
-			} else {
-				// New text line
-				messagePart = new InteractiveMessagePart();
-				message.add(messagePart);
-				// TODO Search for inline tags and apply them
-			}
-		}
-
-
-//		while(!lines.isEmpty()) {
-//			// parts that have different formatting/text but the same hover/click effects
-//			List<InteractiveMessagePart> messageParts = new ArrayList<InteractiveMessagePart>();
-//			String line = lines.get(0);
-//			// hover/click line
-//			if(hasSpecialTag(line)) {
-//				if(!messageParts.isEmpty()) {
-//					// TODO detect which hover/click action it is and apply it to all parts from the messageParts list
-//				} else {
-//					// remove special lines that appear before any text line is given
-//					lines.remove(0);
-//				}
-//			} 
-//			// text line
-//			else {
-//				// Split into pieces at places where formatting changes
-//				while(!line.isEmpty()) {
-//					int formatPosition = getNextTagPosition(line);
-//					String toAdd = null;
-//					boolean handleFormatTag = false;
-//					if(formatPosition == -1) {
-//						toAdd = line;
-//						line = "";
-//
-//					} else {
-//						toAdd = line.substring(0, formatPosition-1);
-//						line = line.substring(formatPosition);			
-//						handleFormatTag = true;
-//					}
-//					if(!toAdd.isEmpty()) {
-//						InteractiveMessagePart part = new InteractiveMessagePart(toAdd);
-//						part.addFormatting(currentFormatting);
-//						part.color = currentColor;
-//						messageParts.add(part);						
-//					}
-//					if(handleFormatTag) {
-//						// Handle the formatting tag
-//						ContinuousTag tag = null;
-//						char[] characters = line.toCharArray();
-//						// Get the actual tag (search the start and retrieve from map)
-//						for(int i=0; i<characters.length; i++) {
-//							if(characters[i] == FancyMessageFormatConverter.tagEnd) {
-//								// make sure that there is something inside the tag, [] is nothing
-//								if(i >= 2) {
-//									String tagText = line.substring(1, i-1);
-//									// Check if it is a valid tag
-//									tag = bracketTagList.get(tagText.toLowerCase());
-//									if(line.length() > i) {
-//										line = line.substring(i+1);
-//									} else {
-//										line = "";
-//									}
-//								}
-//							}
-//						}
-//						if(tag instanceof Color) {
-//							currentColor = (Color)tag;
-//						} else if (tag instanceof FormatType) {
-//							FormatType formatType = (FormatType)tag;
-//							// Check if it is a starting or closing tag
-//							if(formatType.closing) {
-//								// TODO check if this fails because of different inner variable 'closing'
-//								currentFormatting.remove(formatType);
-//							} else {
-//								currentFormatting.add(formatType);
-//							}
-//						}
-//					}
-//				}				
-//			}				
-//			message.addAll(messageParts);			
-//		}
-		
+		boolean lastLineInteractive = false;
+		// Tracklist with parts that have the same hover/click effects but different formatting
+		List<InteractiveMessagePart> messageParts = new ArrayList<InteractiveMessagePart>();
+		for(String line : lines) {
+			// hover/click line
+			TaggedContent interactiveTag = getInteractiveTag(line);
+			if(interactiveTag != null) {
+				lastLineInteractive = true;
+				// TODO: Handle control tags
+				if(!messageParts.isEmpty()) {
+					if(interactiveTag.tag instanceof ClickType) {
+						for(InteractiveMessagePart part : messageParts) {
+							part.clickType = (ClickType)interactiveTag.tag;
+							part.clickContent = interactiveTag.subsequentContent;
+						}
+					} else if (interactiveTag.tag instanceof HoverType) {
+						// Generate a list with TextMessagePart's to apply to all hovers 
+						List<TextMessagePart> hoverParts = new ArrayList<TextMessagePart>();
+						// Split into pieces at places where formatting changes
+						while(!line.isEmpty()) {
+							String toAdd = null;
+							boolean handleFormatTag = false;
+							TaggedContent nextTag = getNextTag(line);
+							if(nextTag == null) {
+								toAdd = line;
+								line = "";
+							} else {
+								toAdd = nextTag.precedingContent;
+								line = nextTag.subsequentContent;			
+								handleFormatTag = true;
+							}
+							// Add a text part with the correct formatting
+							if(!toAdd.isEmpty()) {
+								TextMessagePart part = new TextMessagePart();
+								part.text = toAdd;
+								part.formatTypes = new HashSet<FormatType>(currentFormatting);
+								part.color = currentColor;
+								hoverParts.add(part);						
+							}
+							// Handle the change in formatting if a Tag has been detected (this needs to be after creating the InteractiveMessagePart)
+							if(handleFormatTag) {
+								// Handle the formatting tag
+								if(nextTag.tag instanceof Color) {
+									currentColor = (Color)nextTag.tag;
+								} else if (nextTag.tag instanceof FormatType) {
+									currentFormatting.add((FormatType)nextTag.tag);
+								} else if(nextTag.tag instanceof FormatCloseTag) {
+									currentFormatting.remove(((FormatCloseTag)nextTag.tag).closes);
+								}
+								// TODO: Handle control tags
+							}
+						}						
+						
+						// Apply the hover text to all messageParts
+						if(!hoverParts.isEmpty()) {
+							for(InteractiveMessagePart part : messageParts) {
+								HoverType tagType = (HoverType)interactiveTag.tag;
+								if(part.hoverType != null && part.hoverType == tagType) {
+									// TODO: Add newline, another hover line in the source should start a new line
+									part.hoverContent.addAll(hoverParts);
+								}
+								part.hoverContent = hoverParts;
+								part.hoverType = (HoverType)interactiveTag.tag;
+							}
+						}
+					}
+				} else {	// skip special lines that appear before any text line is given					
+					continue;
+				}
+			} 
+			// text line
+			else {
+				// When switching from interactive to text we want to stop applying special effects to previous message parts
+				if(lastLineInteractive) {
+					message.addAll(messageParts);
+					messageParts.clear();
+					lastLineInteractive = false;
+				}				
+				
+				// Split into pieces at places where formatting changes
+				while(!line.isEmpty()) {
+					String toAdd = null;
+					boolean handleFormatTag = false;
+					TaggedContent nextTag = getNextTag(line);
+					if(nextTag == null) {
+						toAdd = line;
+						line = "";
+					} else {
+						toAdd = nextTag.precedingContent;
+						line = nextTag.subsequentContent;			
+						handleFormatTag = true;
+					}
+					// Add a text part with the correct formatting
+					if(!toAdd.isEmpty()) {
+						InteractiveMessagePart part = new InteractiveMessagePart();
+						part.text = toAdd;
+						part.formatTypes = new HashSet<FormatType>(currentFormatting);
+						part.color = currentColor;
+						messageParts.add(part);						
+					}
+					// Handle the change in formatting if a Tag has been detected (this needs to be after creating the InteractiveMessagePart)
+					if(handleFormatTag) {
+						// Handle the formatting tag
+						if(nextTag.tag instanceof Color) {
+							currentColor = (Color)nextTag.tag;
+						} else if (nextTag.tag instanceof FormatType) {
+							currentFormatting.add((FormatType)nextTag.tag);
+						} else if(nextTag.tag instanceof FormatCloseTag) {
+							currentFormatting.remove(((FormatCloseTag)nextTag.tag).closes);
+						}
+						// TODO: Handle control tags
+					}
+				}				
+			}			
+		}		
 		
 		
 		// TODO Convert to JSON string and return it
@@ -190,63 +213,9 @@ public class FancyMessageFormatConverter {
 	}
 
 
-
-
-
 	// ------------------------------------------------------------------------------------------
 	// -------------------------------     Private functions      -------------------------------
 	// ------------------------------------------------------------------------------------------
-
-
-//	/**
-//	 * Get the next tag that occurs in the line
-//	 * @param line The line you want to get the first tag from
-//	 * @return The first tag occurring in the line or if none are there null
-//	 */
-//	private int getNextTagPosition(String line) {
-//		char[] characters = line.toCharArray();
-//		// search the front of a tag
-//		for(int i=0; i<characters.length; i++) {
-//			if(characters[i] == FancyMessageFormatConverter.TAG_BEFORE) {
-//				// search the end of the tag
-//				for(int j=i+1; j<characters.length; j++) {
-//					if(characters[j] == FancyMessageFormatConverter.TAG_AFTER) {
-//						// make sure that there is something inside the tag, [] is nothing
-//						if(j-i > 2) {
-//							String tagText = line.substring(i+1, j-1);
-//							// Check if it is a valid tag
-//							if(BRACKET_TAG_LIST.get(tagText.toLowerCase()) != null) {
-//								return i;
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
-//		return -1;
-//	}
-
-
-//	/**
-//	 * Check if the specified line is just text or a special formatting line
-//	 * @param line The line that should be checked
-//	 * @return true if the line is a special line, false if it is just text
-//	 */
-//	private boolean hasSpecialTag(String line) {
-//		// Remove leading whitespace
-//		String trimmedLine = line.replaceAll("^\\s+", "");
-//		
-//		for(ClickType clickType : ClickType.values()) { // TODO Misses hover
-//			for(String tag : clickType.getTags()) {
-//				if(trimmedLine.startsWith(tag)) { // TODO Case-insensitive
-//					return true;
-//				}
-//			}
-//		}
-//		return false;		
-//	}
-
-
 	/**
 	 * Searches and returns the first continuous tag found in the given String.
 	 * @return The tag (plus its preceding and subsequent content) if found.
@@ -340,7 +309,6 @@ public class FancyMessageFormatConverter {
 	private static class TextMessagePart {
 		String text = "";
 		Color color = Color.WHITE;
-
 		Set<FormatType> formatTypes = new HashSet<FormatType>();
 
 		/**
@@ -357,9 +325,10 @@ public class FancyMessageFormatConverter {
 	 * Holds a string with interactive formatting.
 	 */
 	private static class InteractiveMessagePart extends TextMessagePart {
-		ClickType clickType = null;		
+		ClickType clickType = null;	
+		HoverType hoverType = null;
 		String clickContent = "";
-		ArrayList<TextMessagePart> hover = new ArrayList<TextMessagePart>();
+		List<TextMessagePart> hoverContent = new ArrayList<TextMessagePart>();
 
 		@Override
 		String toJSON() {
