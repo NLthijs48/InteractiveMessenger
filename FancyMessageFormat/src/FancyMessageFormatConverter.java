@@ -289,12 +289,15 @@ public class FancyMessageFormatConverter {
 				// Ignore (Skip spacing)
 			} else {
 				int end = line.indexOf(": ", index);
-				String inBetween = line.substring(index, end).toLowerCase();
-				if (INTERACTIVE_TAG_LIST.containsKey(inBetween)) {
-					Tag tag = INTERACTIVE_TAG_LIST.get(inBetween);
-					String subsequentContent = line.substring(end + 2);
-					return new TaggedContent(null, tag, subsequentContent);
+				if (end != -1) {
+					String inBetween = line.substring(index, end).toLowerCase();
+					if (INTERACTIVE_TAG_LIST.containsKey(inBetween)) {
+						Tag tag = INTERACTIVE_TAG_LIST.get(inBetween);
+						String subsequentContent = line.substring(end + 2);
+						return new TaggedContent(null, tag, subsequentContent);
+					}
 				}
+				return null;
 			}
 		}
 		return null;
