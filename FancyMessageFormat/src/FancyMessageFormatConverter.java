@@ -85,18 +85,16 @@ public class FancyMessageFormatConverter {
 		}
 
 		LinkedList<InteractiveMessagePart> message = new LinkedList<InteractiveMessagePart>();
-		message.add(new InteractiveMessagePart());
 
 		Color currentColor = null;
 		Set<FormatType> currentFormatting = new HashSet<FormatType>();
 
 		for(String line : lines) {
-			InteractiveMessagePart interactivePart = message.getLast();
-
-			// hover / click line
 			TaggedContent interactiveTag = getInteractiveTag(line);
+			// hover / click line
 			if(interactiveTag != null) {
 				// TODO: Handle control tags
+				InteractiveMessagePart interactivePart = message.getLast();
 				if(interactiveTag.tag instanceof ClickType) {
 					interactivePart.clickType = (ClickType)interactiveTag.tag;
 					interactivePart.clickContent = interactiveTag.subsequentContent;
@@ -152,7 +150,7 @@ public class FancyMessageFormatConverter {
 			} 
 			// text line
 			else {
-				interactivePart = new InteractiveMessagePart();
+				InteractiveMessagePart interactivePart = new InteractiveMessagePart();
 				message.add(interactivePart);
 
 				// Split into pieces at places where formatting changes
