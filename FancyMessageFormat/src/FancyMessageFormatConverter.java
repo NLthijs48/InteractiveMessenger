@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -55,9 +56,7 @@ public class FancyMessageFormatConverter {
 
 
 
-	// TODO Maybe copy (parts of) the "quote" function of Jettison for JSON escaping?
-	// http://grepcode.com/file/repo1.maven.org/maven2/org.codehaus.jettison/jettison/1.3.3/org/codehaus/jettison/json/JSONObject.java#945
-
+	
 
 
 
@@ -85,91 +84,77 @@ public class FancyMessageFormatConverter {
 			lines.remove(0);
 		}
 
-		List<InteractiveMessagePart> message = new ArrayList<InteractiveMessagePart>();
+		LinkedList<InteractiveMessagePart> message = new LinkedList<InteractiveMessagePart>();
 		message.add(new InteractiveMessagePart());
 
 		Color currentColor = null;
 		Set<FormatType> currentFormatting = new HashSet<FormatType>();
 
-		boolean lastLineInteractive = false;
-		// Tracklist with parts that have the same hover/click effects but different formatting
-		List<InteractiveMessagePart> messageParts = new ArrayList<InteractiveMessagePart>();
 		for(String line : lines) {
-			// hover/click line
+			InteractiveMessagePart interactivePart = message.getLast();
+
+			// hover / click line
 			TaggedContent interactiveTag = getInteractiveTag(line);
 			if(interactiveTag != null) {
-				lastLineInteractive = true;
 				// TODO: Handle control tags
-				if(!messageParts.isEmpty()) {
-					if(interactiveTag.tag instanceof ClickType) {
-						for(InteractiveMessagePart part : messageParts) {
-							part.clickType = (ClickType)interactiveTag.tag;
-							part.clickContent = interactiveTag.subsequentContent;
+				if(interactiveTag.tag instanceof ClickType) {
+					interactivePart.clickType = (ClickType)interactiveTag.tag;
+					interactivePart.clickContent = interactiveTag.subsequentContent;
+				} else if (interactiveTag.tag instanceof HoverType) {
+					// Generate a list with TextMessagePart's to apply to all hovers 
+					LinkedList<TextMessagePart> hoverParts = new LinkedList<TextMessagePart>();
+					// Split into pieces at places where formatting changes
+					while(!line.isEmpty()) {
+						String toAdd = null;
+						boolean handleFormatTag = false;
+						TaggedContent nextTag = getNextTag(line);
+						if(nextTag == null) {
+							toAdd = line;
+							line = "";
+						} else {
+							toAdd = nextTag.precedingContent;
+							line = nextTag.subsequentContent;
+							handleFormatTag = true;
 						}
-					} else if (interactiveTag.tag instanceof HoverType) {
-						// Generate a list with TextMessagePart's to apply to all hovers 
-						List<TextMessagePart> hoverParts = new ArrayList<TextMessagePart>();
-						// Split into pieces at places where formatting changes
-						while(!line.isEmpty()) {
-							String toAdd = null;
-							boolean handleFormatTag = false;
-							TaggedContent nextTag = getNextTag(line);
-							if(nextTag == null) {
-								toAdd = line;
-								line = "";
-							} else {
-								toAdd = nextTag.precedingContent;
-								line = nextTag.subsequentContent;			
-								handleFormatTag = true;
+						// Add a text part with the correct formatting
+						if(!toAdd.isEmpty()) {
+							TextMessagePart part = new TextMessagePart();
+							part.text = toAdd;
+							part.formatTypes = new HashSet<FormatType>(currentFormatting);
+							part.color = currentColor;
+							hoverParts.add(part);
+						}
+						// Handle the change in formatting if a Tag has been detected (this needs to be after creating the InteractiveMessagePart)
+						if(handleFormatTag) {
+							// Handle the formatting tag
+							if(nextTag.tag instanceof Color) {
+								currentColor = (Color)nextTag.tag;
+							} else if (nextTag.tag instanceof FormatType) {
+								currentFormatting.add((FormatType)nextTag.tag);
+							} else if(nextTag.tag instanceof FormatCloseTag) {
+								currentFormatting.remove(((FormatCloseTag)nextTag.tag).closes);
 							}
-							// Add a text part with the correct formatting
-							if(!toAdd.isEmpty()) {
-								TextMessagePart part = new TextMessagePart();
-								part.text = toAdd;
-								part.formatTypes = new HashSet<FormatType>(currentFormatting);
-								part.color = currentColor;
-								hoverParts.add(part);						
-							}
-							// Handle the change in formatting if a Tag has been detected (this needs to be after creating the InteractiveMessagePart)
-							if(handleFormatTag) {
-								// Handle the formatting tag
-								if(nextTag.tag instanceof Color) {
-									currentColor = (Color)nextTag.tag;
-								} else if (nextTag.tag instanceof FormatType) {
-									currentFormatting.add((FormatType)nextTag.tag);
-								} else if(nextTag.tag instanceof FormatCloseTag) {
-									currentFormatting.remove(((FormatCloseTag)nextTag.tag).closes);
-								}
-								// TODO: Handle control tags
-							}
-						}						
-						
-						// Apply the hover text to all messageParts
-						if(!hoverParts.isEmpty()) {
-							for(InteractiveMessagePart part : messageParts) {
-								HoverType tagType = (HoverType)interactiveTag.tag;
-								if(part.hoverType != null && part.hoverType == tagType) {
-									// TODO: Add newline, another hover line in the source should start a new line
-									part.hoverContent.addAll(hoverParts);
-								}
-								part.hoverContent = hoverParts;
-								part.hoverType = (HoverType)interactiveTag.tag;
-							}
+							// TODO: Handle control tags
 						}
 					}
-				} else {	// skip special lines that appear before any text line is given					
-					continue;
+
+					// Apply the hover text to all messageParts
+					if(!hoverParts.isEmpty()) {
+						HoverType tagType = (HoverType) interactiveTag.tag;
+						if(interactivePart.hoverType != null && interactivePart.hoverType == tagType) {
+							// TODO: Add newline, another hover line in the source should start a new line
+							interactivePart.hoverContent.addAll(hoverParts);
+						}
+						interactivePart.hoverContent = hoverParts;
+						interactivePart.hoverType = (HoverType)interactiveTag.tag;
+					}
 				}
 			} 
 			// text line
 			else {
-				// When switching from interactive to text we want to stop applying special effects to previous message parts
-				if(lastLineInteractive) {
-					message.addAll(messageParts);
-					messageParts.clear();
-					lastLineInteractive = false;
-				}				
-				
+				interactivePart = new InteractiveMessagePart();
+				message.add(interactivePart);
+
 				// Split into pieces at places where formatting changes
 				while(!line.isEmpty()) {
 					String toAdd = null;
@@ -180,16 +165,16 @@ public class FancyMessageFormatConverter {
 						line = "";
 					} else {
 						toAdd = nextTag.precedingContent;
-						line = nextTag.subsequentContent;			
+						line = nextTag.subsequentContent;
 						handleFormatTag = true;
 					}
 					// Add a text part with the correct formatting
 					if(!toAdd.isEmpty()) {
-						InteractiveMessagePart part = new InteractiveMessagePart();
+						TextMessagePart part = new TextMessagePart();
 						part.text = toAdd;
 						part.formatTypes = new HashSet<FormatType>(currentFormatting);
 						part.color = currentColor;
-						messageParts.add(part);						
+						interactivePart.content.add(part);
 					}
 					// Handle the change in formatting if a Tag has been detected (this needs to be after creating the InteractiveMessagePart)
 					if(handleFormatTag) {
@@ -203,19 +188,24 @@ public class FancyMessageFormatConverter {
 						}
 						// TODO: Handle control tags
 					}
-				}				
-			}			
-		}		
-		
-		
+				}
+			}
+		}
+
+
 		// TODO Convert to JSON string and return it
 		return "";
 	}
 
 
+
+
+
 	// ------------------------------------------------------------------------------------------
 	// -------------------------------     Private functions      -------------------------------
 	// ------------------------------------------------------------------------------------------
+
+
 	/**
 	 * Searches and returns the first continuous tag found in the given String.
 	 * @return The tag (plus its preceding and subsequent content) if found.
@@ -278,6 +268,11 @@ public class FancyMessageFormatConverter {
 	}
 
 
+	// TODO Maybe copy (parts of) the "quote" function of Jettison for JSON escaping?
+	// http://grepcode.com/file/repo1.maven.org/maven2/org.codehaus.jettison/jettison/1.3.3/org/codehaus/jettison/json/JSONObject.java#945
+
+
+
 
 
 
@@ -311,9 +306,7 @@ public class FancyMessageFormatConverter {
 		Color color = Color.WHITE;
 		Set<FormatType> formatTypes = new HashSet<FormatType>();
 
-		/**
-		 * Converts this message into a MC-JSON array.
-		 */
+
 		String toJSON() {
 			// TODO Create JSON array
 			return "";
@@ -324,13 +317,19 @@ public class FancyMessageFormatConverter {
 	/**
 	 * Holds a string with interactive formatting.
 	 */
-	private static class InteractiveMessagePart extends TextMessagePart {
-		ClickType clickType = null;	
-		HoverType hoverType = null;
-		String clickContent = "";
-		List<TextMessagePart> hoverContent = new ArrayList<TextMessagePart>();
+	private static class InteractiveMessagePart {
 
-		@Override
+		LinkedList<TextMessagePart> content = new LinkedList<TextMessagePart>();
+
+		// Click
+		ClickType clickType    = null;
+		String    clickContent = "";
+
+		// Hover
+		HoverType hoverType = null;
+		LinkedList<TextMessagePart> hoverContent = new LinkedList<TextMessagePart>();
+
+
 		String toJSON() {
 			// TODO Create JSON array
 			return "";
@@ -481,7 +480,7 @@ public class FancyMessageFormatConverter {
 		public String[] getTags() {
 			return tags;
 		}
-		
+
 	}
 
 
