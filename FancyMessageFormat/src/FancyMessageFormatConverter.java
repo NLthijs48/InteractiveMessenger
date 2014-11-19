@@ -80,25 +80,18 @@ public class FancyMessageFormatConverter {
 			lines.addAll(Arrays.asList(line.split("\\r?\\n")));
 		}
 
-		// Remove any special lines at the start (a real text line should be first)
-		while(!lines.isEmpty() && isInteractiveTag(lines.get(0))) {
-			lines.remove(0);
-		}
-
 		List<InteractiveMessagePart> message = new ArrayList<InteractiveMessagePart>();
 		message.add(new InteractiveMessagePart());
 
 		Color currentColor = null;
 		Set<FormatType> currentFormatting = new HashSet<FormatType>();
 
-		boolean lastLineInteractive = false;
 		// Tracklist with parts that have the same hover/click effects but different formatting
 		List<InteractiveMessagePart> messageParts = new ArrayList<InteractiveMessagePart>();
 		for(String line : lines) {
 			// hover/click line
 			TaggedContent interactiveTag = getInteractiveTag(line);
 			if(interactiveTag != null) {
-				lastLineInteractive = true;
 				// TODO: Handle control tags
 				if(!messageParts.isEmpty()) {
 					if(interactiveTag.tag instanceof ClickType) {
@@ -164,11 +157,8 @@ public class FancyMessageFormatConverter {
 			// text line
 			else {
 				// When switching from interactive to text we want to stop applying special effects to previous message parts
-				if(lastLineInteractive) {
-					message.addAll(messageParts);
-					messageParts.clear();
-					lastLineInteractive = false;
-				}				
+				message.addAll(messageParts);
+				messageParts.clear();		
 				
 				// Split into pieces at places where formatting changes
 				while(!line.isEmpty()) {
