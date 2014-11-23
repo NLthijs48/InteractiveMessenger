@@ -32,19 +32,20 @@ public class FancyMessageFormatConverter {
 	static {
 		// Enlist all possible tags
 		// (They go into a HashMap for lookup purposes)
-		cacheTags(Color.class, BRACKET_TAG_LIST);
-		cacheTags(FormatType.class, BRACKET_TAG_LIST);
-		cacheTags(FormatCloseTag.class, BRACKET_TAG_LIST);
+		cacheTags(BRACKET_TAG_LIST, Color.class);
+		cacheTags(BRACKET_TAG_LIST, FormatType.class);
+		cacheTags(BRACKET_TAG_LIST, FormatCloseTag.class);
+		cacheTags(BRACKET_TAG_LIST, ControlTag.class);
 		// Interactive tags
-		cacheTags(ClickType.class, INTERACTIVE_TAG_LIST);
-		cacheTags(HoverType.class, INTERACTIVE_TAG_LIST);
+		cacheTags(INTERACTIVE_TAG_LIST, ClickType.class);
+		cacheTags(INTERACTIVE_TAG_LIST, HoverType.class);
 	}
 
 
 	/**
 	 * Puts all constants in the given Tag class into the given lookup table.
 	 */
-	private static <T extends Tag> void cacheTags(Class<T> tags, HashMap<String, Tag> tagList) {
+	private static <T extends Tag> void cacheTags(HashMap<String, Tag> tagList, Class<T> tags) {
 		for (Tag tag : tags.getEnumConstants()) {
 			for(String key : tag.getTags()) {
 				tagList.put(key, tag);
@@ -56,7 +57,7 @@ public class FancyMessageFormatConverter {
 
 
 
-	
+
 
 
 
@@ -64,7 +65,8 @@ public class FancyMessageFormatConverter {
 	// ------------------------------------------------------------------------------------------
 	// -------------------------------     Public / Interface     -------------------------------
 	// ------------------------------------------------------------------------------------------
-	
+
+
 	// Wrapper to allow one string as parameter
 	public String convertToJSON(final String line) {
 		return convertToJSON(Arrays.asList(line));
@@ -217,12 +219,18 @@ public class FancyMessageFormatConverter {
 				if (end != -1) {
 					String inBetween = line.substring(start+1, end).toLowerCase();
 					if (BRACKET_TAG_LIST.containsKey(inBetween)) {
-						String previousContent = line.substring(0, start);
 						Tag tag = BRACKET_TAG_LIST.get(inBetween);
-						String subsequentContent = line.substring(end + 1);
-						return new TaggedContent(previousContent, tag, subsequentContent);
+						if (tag == ControlTag.ESCAPE) {
+							// Ignore next char
+							line = line.substring(0, start) + line.substring(end + 1);
+							startIndex = start;
+						} else {
+							String previousContent = line.substring(0, start);
+							String subsequentContent = line.substring(end + 1);
+							return new TaggedContent(previousContent, tag, subsequentContent);
+						}
 					} else {
-						startIndex = start + 1;
+						startIndex = start;
 					}
 				} else {
 					return null;
