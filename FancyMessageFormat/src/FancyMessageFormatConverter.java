@@ -3,7 +3,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -82,7 +81,7 @@ public class FancyMessageFormatConverter {
 		}
 
 		// Remove any special lines at the start (a real text line should be first)
-		while(!lines.isEmpty() && isInteractiveTag(lines.get(0))) {
+		while(!lines.isEmpty() && isTaggedInteractive(lines.get(0))) {
 			lines.remove(0);
 		}
 
@@ -92,103 +91,83 @@ public class FancyMessageFormatConverter {
 		Set<FormatType> currentFormatting = new HashSet<FormatType>();
 
 		for(String line : lines) {
+			InteractiveMessagePart messagePart;
 			TaggedContent interactiveTag = getInteractiveTag(line);
-			// hover / click line
-			if(interactiveTag != null) {
-				// TODO: Handle control tags
-				InteractiveMessagePart interactivePart = message.getLast();
-				if(interactiveTag.tag instanceof ClickType) {
-					interactivePart.clickType = (ClickType)interactiveTag.tag;
-					interactivePart.clickContent = interactiveTag.subsequentContent;
-				} else if (interactiveTag.tag instanceof HoverType) {
-					// Generate a list with TextMessagePart's to apply to all hovers 
-					LinkedList<TextMessagePart> hoverParts = new LinkedList<TextMessagePart>();
-					// Split into pieces at places where formatting changes
-					while(!line.isEmpty()) {
-						String toAdd = null;
-						boolean handleFormatTag = false;
-						TaggedContent nextTag = getNextTag(line);
-						if(nextTag == null) {
-							toAdd = line;
-							line = "";
-						} else {
-							toAdd = nextTag.precedingContent;
-							line = nextTag.subsequentContent;
-							handleFormatTag = true;
-						}
-						// Add a text part with the correct formatting
-						if(!toAdd.isEmpty()) {
-							TextMessagePart part = new TextMessagePart();
-							part.text = toAdd;
-							part.formatTypes = new HashSet<FormatType>(currentFormatting);
-							part.color = currentColor;
-							hoverParts.add(part);
-						}
-						// Handle the change in formatting if a Tag has been detected (this needs to be after creating the InteractiveMessagePart)
-						if(handleFormatTag) {
-							// Handle the formatting tag
-							if(nextTag.tag instanceof Color) {
-								currentColor = (Color)nextTag.tag;
-							} else if (nextTag.tag instanceof FormatType) {
-								currentFormatting.add((FormatType)nextTag.tag);
-							} else if(nextTag.tag instanceof FormatCloseTag) {
-								currentFormatting.remove(((FormatCloseTag)nextTag.tag).closes);
-							}
-							// TODO: Handle control tags
-						}
-					}
+			boolean isTextLine = interactiveTag == null;
+			boolean isHoverLine = false;
 
-					// Apply the hover text to all messageParts
-					if(!hoverParts.isEmpty()) {
-						HoverType tagType = (HoverType) interactiveTag.tag;
-						if(interactivePart.hoverType != null && interactivePart.hoverType == tagType) {
-							// TODO: Add newline, another hover line in the source should start a new line
-							interactivePart.hoverContent.addAll(hoverParts);
-						}
-						interactivePart.hoverContent = hoverParts;
-						interactivePart.hoverType = (HoverType)interactiveTag.tag;
+			if (isTextLine) {
+				messagePart = new InteractiveMessagePart();
+				message.add(messagePart);
+			}
+			else /* if Interactive formatting */ {
+				messagePart = message.getLast();
+				Tag tag = interactiveTag.tag;
+				if(tag instanceof ClickType) {
+					messagePart.clickType = (ClickType) interactiveTag.tag;
+					messagePart.clickContent = interactiveTag.subsequentContent;
+				} else if (tag instanceof HoverType) {
+					line = interactiveTag.subsequentContent;
+					isHoverLine = true;
+					if (messagePart.hoverType != tag) {
+						// Hover type changed
+						messagePart.hoverContent = new LinkedList<TextMessagePart>();
+						messagePart.hoverType = (HoverType) tag;
 					}
+					// Add hover content below
 				}
-			} 
-			// text line
-			else {
-				InteractiveMessagePart interactivePart = new InteractiveMessagePart();
-				message.add(interactivePart);
+			}
+
+			if (isTextLine || isHoverLine) {
+				// Parse inline tags
+
+				Color currentLineColor = currentColor;
+				Set<FormatType> currentLineFormatting = currentFormatting;
+				LinkedList<TextMessagePart> targetList = messagePart.content;
+				if (isHoverLine) {
+					// Reset - use own
+					currentLineColor = null;
+					currentLineFormatting = new HashSet<FormatType>();
+					targetList = messagePart.hoverContent;
+				}
 
 				// Split into pieces at places where formatting changes
 				while(!line.isEmpty()) {
-					String toAdd = null;
-					boolean handleFormatTag = false;
+					String textToAdd = null;
 					TaggedContent nextTag = getNextTag(line);
-					if(nextTag == null) {
-						toAdd = line;
+					boolean pureText = nextTag == null;
+
+					if(pureText) {
+						textToAdd = line;
 						line = "";
 					} else {
-						toAdd = nextTag.precedingContent;
+						textToAdd = nextTag.precedingContent;
 						line = nextTag.subsequentContent;
-						handleFormatTag = true;
 					}
-					// Add a text part with the correct formatting
-					if(!toAdd.isEmpty()) {
+
+					if(!textToAdd.isEmpty()) {
+						// Add a text part with the correct formatting
 						TextMessagePart part = new TextMessagePart();
-						part.text = toAdd;
-						part.formatTypes = new HashSet<FormatType>(currentFormatting);
-						part.color = currentColor;
-						interactivePart.content.add(part);
+						part.text = textToAdd;
+						part.formatTypes = new HashSet<FormatType>(currentLineFormatting);
+						part.color = currentLineColor;
+						targetList.add(part);
 					}
+
 					// Handle the change in formatting if a Tag has been detected (this needs to be after creating the InteractiveMessagePart)
-					if(handleFormatTag) {
+					if(!pureText) {
 						// Handle the formatting tag
-						if(nextTag.tag instanceof Color) {
-							currentColor = (Color)nextTag.tag;
-						} else if (nextTag.tag instanceof FormatType) {
-							currentFormatting.add((FormatType)nextTag.tag);
-						} else if(nextTag.tag instanceof FormatCloseTag) {
-							currentFormatting.remove(((FormatCloseTag)nextTag.tag).closes);
+						Tag tag = nextTag.tag;
+						if (tag instanceof Color) {
+							currentLineColor = (Color) tag;
+						} else if (tag instanceof FormatType) {
+							currentLineFormatting.add((FormatType) tag);
+						} else if(tag instanceof FormatCloseTag) {
+							currentLineFormatting.remove(((FormatCloseTag) tag).closes);
 						}
-						// TODO: Handle control tags
 					}
 				}
+				// TODO Handle break tag
 			}
 		}
 
@@ -269,7 +248,7 @@ public class FancyMessageFormatConverter {
 	}
 
 
-	private static boolean isInteractiveTag(String line) {
+	private static boolean isTaggedInteractive(String line) {
 		return getInteractiveTag(line) != null;
 	}
 
@@ -296,10 +275,6 @@ public class FancyMessageFormatConverter {
 			this.precedingContent = pre;
 			this.tag = tag;
 			this.subsequentContent = sub;
-		}
-
-		public boolean noPreContent() {
-			return precedingContent.isEmpty();
 		}
 	}
 
@@ -333,7 +308,7 @@ public class FancyMessageFormatConverter {
 
 		// Hover
 		HoverType hoverType = null;
-		LinkedList<TextMessagePart> hoverContent = new LinkedList<TextMessagePart>();
+		LinkedList<TextMessagePart> hoverContent = null;
 
 
 		String toJSON() {
