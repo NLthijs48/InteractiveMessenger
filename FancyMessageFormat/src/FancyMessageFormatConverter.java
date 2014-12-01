@@ -76,12 +76,12 @@ public class FancyMessageFormatConverter {
 		// Split lines at line breaks
 		// In the end we will have a list with one line per element
 		ArrayList<String> lines = new ArrayList<>();
-		for(String line : inputLines) {
+		for (String line : inputLines) {
 			lines.addAll(Arrays.asList(line.split("\\r?\\n")));
 		}
 
 		// Remove any special lines at the start (a real text line should be first)
-		while(!lines.isEmpty() && isTaggedInteractive(lines.get(0))) {
+		while (!lines.isEmpty() && isTaggedInteractive(lines.get(0))) {
 			lines.remove(0);
 		}
 
@@ -90,7 +90,7 @@ public class FancyMessageFormatConverter {
 		Color currentColor = null;
 		Set<FormatType> currentFormatting = new HashSet<FormatType>();
 
-		for(String line : lines) {
+		lineLoop: for (String line : lines) {
 			InteractiveMessagePart messagePart;
 			TaggedContent interactiveTag = getInteractiveTag(line);
 			boolean isTextLine = interactiveTag == null;
@@ -103,7 +103,7 @@ public class FancyMessageFormatConverter {
 			else /* if Interactive formatting */ {
 				messagePart = message.getLast();
 				Tag tag = interactiveTag.tag;
-				if(tag instanceof ClickType) {
+				if (tag instanceof ClickType) {
 					messagePart.clickType = (ClickType) interactiveTag.tag;
 					messagePart.clickContent = interactiveTag.subsequentContent;
 				} else if (tag instanceof HoverType) {
@@ -124,20 +124,22 @@ public class FancyMessageFormatConverter {
 				Color currentLineColor = currentColor;
 				Set<FormatType> currentLineFormatting = currentFormatting;
 				LinkedList<TextMessagePart> targetList = messagePart.content;
+				boolean parseBreak = true;
 				if (isHoverLine) {
 					// Reset - use own
 					currentLineColor = null;
 					currentLineFormatting = new HashSet<FormatType>();
 					targetList = messagePart.hoverContent;
+					parseBreak = false;
 				}
 
 				// Split into pieces at places where formatting changes
-				while(!line.isEmpty()) {
+				while (!line.isEmpty()) {
 					String textToAdd = null;
-					TaggedContent nextTag = getNextTag(line);
-					boolean pureText = nextTag == null;
+					TaggedContent nextTag = getNextTag(line, parseBreak);
+					boolean tagged = nextTag != null;
 
-					if(pureText) {
+					if (!tagged) {
 						textToAdd = line;
 						line = "";
 					} else {
@@ -145,7 +147,7 @@ public class FancyMessageFormatConverter {
 						line = nextTag.subsequentContent;
 					}
 
-					if(!textToAdd.isEmpty()) {
+					if (!textToAdd.isEmpty()) {
 						// Add a text part with the correct formatting
 						TextMessagePart part = new TextMessagePart();
 						part.text = textToAdd;
@@ -155,19 +157,21 @@ public class FancyMessageFormatConverter {
 					}
 
 					// Handle the change in formatting if a Tag has been detected (this needs to be after creating the InteractiveMessagePart)
-					if(!pureText) {
+					if (tagged) {
 						// Handle the formatting tag
 						Tag tag = nextTag.tag;
 						if (tag instanceof Color) {
 							currentLineColor = (Color) tag;
 						} else if (tag instanceof FormatType) {
 							currentLineFormatting.add((FormatType) tag);
-						} else if(tag instanceof FormatCloseTag) {
+						} else if (tag instanceof FormatCloseTag) {
 							currentLineFormatting.remove(((FormatCloseTag) tag).closes);
+						} else if (tag == ControlTag.BREAK) {
+							targetList.getLast().text += '\n';
+							continue lineLoop;
 						}
 					}
 				}
-				// TODO Handle break tag
 			}
 		}
 
@@ -190,7 +194,7 @@ public class FancyMessageFormatConverter {
 	 * @return The tag (plus its preceding and subsequent content) if found.
 	 *         Null if nothing is found.
 	 */
-	private static TaggedContent getNextTag(String line) {
+	private static TaggedContent getNextTag(String line, boolean parseBreak) {
 		for (int startIndex = 0; startIndex < line.length(); startIndex++) {
 			int start = line.indexOf(TAG_BEFORE, startIndex);
 			if (start != -1) {
@@ -203,6 +207,9 @@ public class FancyMessageFormatConverter {
 							// Ignore next char
 							line = line.substring(0, start) + line.substring(end + 1);
 							startIndex = start;
+						} else if (!parseBreak && tag == ControlTag.ESCAPE) {
+							// Ignore break
+							startIndex = end + 1;
 						} else {
 							String previousContent = line.substring(0, start);
 							String subsequentContent = line.substring(end + 1);
