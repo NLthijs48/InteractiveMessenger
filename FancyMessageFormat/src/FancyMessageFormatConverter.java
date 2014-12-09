@@ -67,12 +67,12 @@ public class FancyMessageFormatConverter {
 
 
 	// Wrapper to allow one string as parameter
-	public String convertToJSON(final String line) {
+	public static String convertToJSON(final String line) {
 		return convertToJSON(Arrays.asList(line));
 	}
 
 
-	public String convertToJSON(final Iterable<String> inputLines) {
+	public static String convertToJSON(final Iterable<String> inputLines) {
 		// Split lines at line breaks
 		// In the end we will have a list with one line per element
 		ArrayList<String> lines = new ArrayList<>();
@@ -85,12 +85,36 @@ public class FancyMessageFormatConverter {
 			lines.remove(0);
 		}
 
+		LinkedList<InteractiveMessagePart> message = parse(lines);
+		StringBuilder sb = new StringBuilder();
+		sb.append("{text=\"\",extra:[");
+		for (InteractiveMessagePart messagePart : message) {
+			sb.append(messagePart.toJSON());
+			sb.append(',');
+		}
+		sb.deleteCharAt(sb.length() - 1);
+		sb.append("]}");
+
+
+		return sb.toString();
+	}
+
+
+
+
+
+	// ------------------------------------------------------------------------------------------
+	// -------------------------------     Private functions      -------------------------------
+	// ------------------------------------------------------------------------------------------
+
+
+	private static LinkedList<InteractiveMessagePart> parse(final Iterable<String> inputLines) {
 		LinkedList<InteractiveMessagePart> message = new LinkedList<InteractiveMessagePart>();
 
-		Color currentColor = null;
+		Color currentColor = Color.WHITE;
 		Set<FormatType> currentFormatting = new HashSet<FormatType>();
 
-		lineLoop: for (String line : lines) {
+		lineLoop: for (String line : inputLines) {
 			InteractiveMessagePart messagePart;
 			TaggedContent interactiveTag = getInteractiveTag(line);
 			boolean isTextLine = interactiveTag == null;
@@ -127,7 +151,7 @@ public class FancyMessageFormatConverter {
 				boolean parseBreak = true;
 				if (isHoverLine) {
 					// Reset - use own
-					currentLineColor = null;
+					currentLineColor = Color.WHITE;
 					currentLineFormatting = new HashSet<FormatType>();
 					targetList = messagePart.hoverContent;
 					parseBreak = false;
@@ -172,21 +196,18 @@ public class FancyMessageFormatConverter {
 						}
 					}
 				}
+
+				if (isHoverLine) {
+					targetList.getLast().text += '\n'; // TODO remove last linebreak
+				} else {
+					// Adapt global attributes
+					currentColor = currentLineColor;
+				}
 			}
 		}
 
-
-		// TODO Convert to JSON string and return it
-		return "";
+		return message;
 	}
-
-
-
-
-
-	// ------------------------------------------------------------------------------------------
-	// -------------------------------     Private functions      -------------------------------
-	// ------------------------------------------------------------------------------------------
 
 
 	/**
@@ -260,8 +281,67 @@ public class FancyMessageFormatConverter {
 	}
 
 
-	// TODO Maybe copy (parts of) the "quote" function of Jettison for JSON escaping?
-	// http://grepcode.com/file/repo1.maven.org/maven2/org.codehaus.jettison/jettison/1.3.3/org/codehaus/jettison/json/JSONObject.java#945
+	/**
+	 * Produce a string in double quotes with backslash sequences in all the
+	 * right places.
+	 * @param string A String
+	 * @return  A String correctly formatted for insertion in a JSON text.
+	 */
+	/*
+	 * Copyright (c) 2002 JSON.org
+	 * Licensed under the Apache License, Version 2.0
+	 */
+	private static String quoteStringJson(String string) {
+		if (string == null || string.length() == 0) {
+			return "\"\"";
+		}
+
+		char         c = 0;
+		int          i;
+		int          len = string.length();
+		StringBuilder sb = new StringBuilder(len + 4);
+		String       t;
+
+		sb.append('"');
+		for (i = 0; i < len; i += 1) {
+			c = string.charAt(i);
+			switch (c) {
+			case '\\':
+			case '"':
+				sb.append('\\');
+				sb.append(c);
+				break;
+			case '/':
+				sb.append('\\');
+				sb.append(c);
+				break;
+			case '\b':
+				sb.append("\\b");
+				break;
+			case '\t':
+				sb.append("\\t");
+				break;
+			case '\n':
+				sb.append("\\n");
+				break;
+			case '\f':
+				sb.append("\\f");
+				break;
+			case '\r':
+				sb.append("\\r");
+				break;
+			default:
+				if (c < ' ') {
+					t = "000" + Integer.toHexString(c);
+					sb.append("\\u" + t.substring(t.length() - 4));
+				} else {
+					sb.append(c);
+				}
+			}
+		}
+		sb.append('"');
+		return sb.toString();
+	}
 
 
 
@@ -296,8 +376,23 @@ public class FancyMessageFormatConverter {
 
 
 		String toJSON() {
-			// TODO Create JSON array
-			return "";
+			StringBuilder sb = new StringBuilder();
+			sb.append('{');
+			sb.append("text:").append(quoteStringJson(text));
+			if (color != Color.WHITE) {
+				sb.append(",color:").append(color.jsonValue);
+			}
+			for (FormatType formatting : formatTypes) {
+				sb.append(',');
+				sb.append(formatting.jsonKey).append(':');
+				sb.append("true");
+			}
+			sb.append('}');
+			return sb.toString();
+		}
+
+		boolean hasFormatting() {
+			return !(color == Color.WHITE && formatTypes.isEmpty());
 		}
 	}
 
@@ -319,8 +414,53 @@ public class FancyMessageFormatConverter {
 
 
 		String toJSON() {
-			// TODO Create JSON array
-			return "";
+			StringBuilder sb = new StringBuilder();
+			if (content.size() == 1) {
+				// Add attributes to TextMessagePart object
+				sb.append(content.getFirst().toJSON());
+				sb.deleteCharAt(sb.length() - 1);
+			} else {
+				sb.append('{');
+				sb.append("text=\"\",extra:[");
+				for (TextMessagePart textPart : content) {
+					sb.append(textPart.toJSON());
+					sb.append(',');
+				}
+				sb.deleteCharAt(sb.length() - 1);
+				sb.append(']');
+			}
+			if (clickType != null) {
+				sb.append(',');
+				sb.append("clickEvent:{");
+					sb.append("action:").append(clickType.getJsonKey()).append(',');
+					sb.append("value:").append(quoteStringJson(clickContent));
+				sb.append('}');
+			}
+			if (hoverType != null) {
+				sb.append(',');
+				sb.append("hoverEvent:{");
+					sb.append("action:").append(hoverType.getJsonKey()).append(',');
+					sb.append("value:");
+					if (hoverContent.size() == 1) {
+						TextMessagePart hoverPart = hoverContent.getFirst();
+						if (hoverPart.hasFormatting()) {
+							sb.append(hoverPart.toJSON());
+						} else {
+							sb.append(quoteStringJson(hoverPart.text));
+						}
+					} else {
+						sb.append('[');
+						for (TextMessagePart hoverPart : hoverContent) {
+							sb.append(hoverPart.toJSON());
+							sb.append(',');
+						}
+						sb.deleteCharAt(sb.length() - 1);
+						sb.append(']');
+					}
+				sb.append('}');
+			}
+			sb.append('}');
+			return sb.toString();
 		}
 	}
 
@@ -374,12 +514,12 @@ public class FancyMessageFormatConverter {
 		DARK_GRAY('8');
 
 		final char bytecode;
-		final String jsonKey;
+		final String jsonValue;
 		final String[] tags;
 
 		private Color(char bytecode) {
 			this.bytecode = bytecode;
-			this.jsonKey = this.name().toLowerCase();
+			this.jsonValue = this.name().toLowerCase();
 			this.tags = new String[] {this.name().toLowerCase()};
 		}
 
@@ -434,7 +574,7 @@ public class FancyMessageFormatConverter {
 
 		/** Formatting that is stopped at this point */
 		final FormatType closes;
-		final String[] tags;
+		private final String[] tags;
 
 		private FormatCloseTag(FormatType openingTag) {
 			this.closes = openingTag;
@@ -458,7 +598,7 @@ public class FancyMessageFormatConverter {
 		BREAK("break"),
 		ESCAPE("esc");
 
-		final String[] tags;
+		private final String[] tags;
 
 		private ControlTag(String... tags) {
 			this.tags = tags;
@@ -480,8 +620,8 @@ public class FancyMessageFormatConverter {
 		COMMAND("run_command", "command"),
 		SUGGEST("suggest_command", "suggest");
 
-		final String jsonKey;
-		final String[] tags;
+		private final String jsonKey;
+		private final String[] tags;
 
 		private ClickType(String jsonKey, String... tags) {
 			this.jsonKey = jsonKey;
@@ -510,7 +650,7 @@ public class FancyMessageFormatConverter {
 
 		@Override
 		public String getJsonKey() {
-			return "hoverEvent";
+			return "show_text";
 		}
 	}
 
