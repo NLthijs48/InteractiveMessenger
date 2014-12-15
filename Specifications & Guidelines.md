@@ -28,7 +28,7 @@ FancyMessageFormat
 #### Special effect tags:
 * Tags are for adding special effects to a part of the text, used as the following: "  link: http://google.com"
 * Supported tags:
-  * Link: If clicked it will cause a ìDo you want to visit this website?î popup
+  * Link: If clicked it will cause a ‚ÄúDo you want to visit this website?‚Äù popup
   * Hover: If hovered over with the mouse it will give information in a little box
     * You can use multiple lines with this tag to get multi-line hover popups
   * Suggest: If clicked it will put a string into the chat box
@@ -43,9 +43,5 @@ FancyMessageFormat
 * Also works for variables
 
 ## Format Guidelines
-* Use lower/upper-case characters for tags
-* When using a special effect tag indent the line by 2 spaces (up for debate)
-
-## TODO:
-* Add examples
-* Add more guidelines
+* Use lowercase characters for tags
+* When using a special effect tag indent the line by 4 spaces (up for debate)
