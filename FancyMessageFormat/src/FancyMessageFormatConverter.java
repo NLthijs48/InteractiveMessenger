@@ -87,13 +87,17 @@ public class FancyMessageFormatConverter {
 
 		LinkedList<InteractiveMessagePart> message = parse(lines);
 		StringBuilder sb = new StringBuilder();
-		sb.append("{text=\"\",extra:[");
-		for (InteractiveMessagePart messagePart : message) {
-			sb.append(messagePart.toJSON());
-			sb.append(',');
+		if (message.size() == 1) {
+			sb.append(message.getFirst().toJSON());
+		} else {
+			sb.append("{text=\"\",extra:[");
+			for (InteractiveMessagePart messagePart : message) {
+				sb.append(messagePart.toJSON());
+				sb.append(',');
+			}
+			sb.deleteCharAt(sb.length() - 1);
+			sb.append("]}");
 		}
-		sb.deleteCharAt(sb.length() - 1);
-		sb.append("]}");
 
 
 		return sb.toString();
@@ -155,6 +159,11 @@ public class FancyMessageFormatConverter {
 					currentLineFormatting = new HashSet<FormatType>();
 					targetList = messagePart.hoverContent;
 					parseBreak = false;
+
+					// Add line break after previous hover line
+					if (!targetList.isEmpty()) {
+						targetList.getLast().text += '\n';
+					}
 				}
 
 				// Split into pieces at places where formatting changes
@@ -197,9 +206,7 @@ public class FancyMessageFormatConverter {
 					}
 				}
 
-				if (isHoverLine) {
-					targetList.getLast().text += '\n'; // TODO remove last linebreak
-				} else {
+				if (!isHoverLine) {
 					// Adapt global attributes
 					currentColor = currentLineColor;
 				}
