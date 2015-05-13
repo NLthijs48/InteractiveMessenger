@@ -20,7 +20,10 @@ public class FancyMessageFormatConverter {
 	private static final char END_TAG_INDICATOR = '/';
 
 	/** The special character that prefixes all basic chat formatting codes. */
-	private static final char SIMPLE_FORMAT_CHAR = '\u00A7';
+	private static final char SIMPLE_FORMAT_PREFIX_CHAR = '\u00A7';
+
+	/** Resets all previous chat colors or formats. */
+	private static final char SIMPLE_FORMAT_RESET_CHAR = 'r';
 
 	/** Lookup table for all continuous tags (marked by []) */
 	private static final HashMap<String, Tag> BRACKET_TAG_LIST  = new HashMap<String, Tag>();
@@ -66,24 +69,22 @@ public class FancyMessageFormatConverter {
 	// ------------------------------------------------------------------------------------------
 
 
-	// Wrapper to allow one string as parameter
-	public static String convertToJSON(final String line) {
-		return convertToJSON(Arrays.asList(line));
+	/**
+	 * Parses the given FancyMessageFormat message to a JSON array that can be
+	 * used with the tellraw command and the like.
+	 */
+	public static String convertToJSON(final String message) {
+		return convertToJSON(Arrays.asList(message));
 	}
 
-
+	/**
+	 * Parses the given FancyMessageFormat message to a JSON array that can be
+	 * used with the tellraw command and the like.
+	 *
+	 * @param inputLines Input message split at line breaks.
+	 */
 	public static String convertToJSON(final Iterable<String> inputLines) {
-		// Split lines at line breaks
-		// In the end we will have a list with one line per element
-		ArrayList<String> lines = new ArrayList<>();
-		for (String line : inputLines) {
-			lines.addAll(Arrays.asList(line.split("\\r?\\n")));
-		}
-
-		// Remove any special lines at the start (a real text line should be first)
-		while (!lines.isEmpty() && isTaggedInteractive(lines.get(0))) {
-			lines.remove(0);
-		}
+		ArrayList<String> lines = cleanInputString(inputLines);
 
 		LinkedList<InteractiveMessagePart> message = parse(lines);
 		StringBuilder sb = new StringBuilder();
@@ -104,12 +105,128 @@ public class FancyMessageFormatConverter {
 	}
 
 
+	/**
+	 * Parses the given FancyMessageFormat message to a String containing control characters
+	 * for formatting that can be used for console outputs, but also for normal player
+	 * messages.
+	 * <p>
+	 * The returned message will only contain colors, bold, italic, underlining and 'magic'
+	 * characters. Hovers and other advanced tellraw tags will be skipped.
+	 *
+	 * @param inputLines Input message split at line breaks.
+	 */
+	public static String convertToConsole(final String message) {
+		return convertToConsole(Arrays.asList(message));
+	}
+
+	/**
+	 * Parses the given FancyMessageFormat message to a String containing control characters
+	 * for formatting that can be used for console outputs, but also for normal player
+	 * messages.
+	 * <p>
+	 * The returned message will only contain colors, bold, italic, underlining and 'magic'
+	 * characters. Hovers and other advanced tellraw tags will be skipped.
+	 */
+	public static String convertToConsole(final Iterable<String> inputLines) {
+		ArrayList<String> lines = cleanInputString(inputLines);
+		StringBuilder result = new StringBuilder();
+
+		Color currentColor = Color.WHITE;
+		Set<FormatType> currentFormatting = new HashSet<FormatType>();
+		boolean formatReset = false;
+
+		for (String line : lines) {
+			if (isTaggedInteractive(line)) continue; // Skip. Ignore advanced formatting.
+
+			while (!line.isEmpty()) {
+				TaggedContent tagged = getNextTag(line, true);
+				String text = line;
+				Tag tag = null;
+				if (tagged != null) {
+					text = tagged.precedingContent;
+					tag  = tagged.tag;
+					line = tagged.subsequentContent;
+				} else {
+					line = "";
+				}
+				if (!text.isEmpty() && formatReset) {
+					// Reset all formatting
+					result.append(SIMPLE_FORMAT_PREFIX_CHAR);
+					result.append(SIMPLE_FORMAT_RESET_CHAR);
+					// Re-apply active formats
+					if (currentColor != Color.WHITE) {
+						result.append(SIMPLE_FORMAT_PREFIX_CHAR);
+						result.append(currentColor.getNativeFormattingCode());
+					}
+					for(FormatType format : currentFormatting) {
+						result.append(SIMPLE_FORMAT_PREFIX_CHAR);
+						result.append(format.getNativeFormattingCode());
+					}
+					formatReset = false;
+				}
+				result.append(text);
+				if (tag != null) {
+					if (tag == ControlTag.BREAK) {
+						result.append('\n');
+						result.append(SIMPLE_FORMAT_PREFIX_CHAR);
+						result.append(SIMPLE_FORMAT_RESET_CHAR);
+						currentColor = Color.WHITE;
+						currentFormatting.clear();
+						formatReset = false;
+						line = "";
+					} else if (tag.getClass() == Color.class) {
+						Color color = (Color) tag;
+						result.append(SIMPLE_FORMAT_PREFIX_CHAR);
+						result.append(color.getNativeFormattingCode());
+						currentColor = color;
+					} else if (tag.getClass() == FormatType.class) {
+						FormatType format = (FormatType) tag;
+						result.append(SIMPLE_FORMAT_PREFIX_CHAR);
+						result.append(format.getNativeFormattingCode());
+						currentFormatting.add(format);
+					} else if (tag.getClass() == FormatCloseTag.class) {
+						FormatCloseTag format = (FormatCloseTag) tag;
+						currentFormatting.remove(format.closes);
+						formatReset = true;
+					}
+				}
+			}
+		}
+
+		return result.toString();
+	}
+
+
 
 
 
 	// ------------------------------------------------------------------------------------------
 	// -------------------------------     Private functions      -------------------------------
 	// ------------------------------------------------------------------------------------------
+
+
+	/**
+	 * <ul>
+	 *     <li>Splits lines at line breaks (creating a new line in the Array).
+	 *     <li>Removes empty lines at the beginning.
+	 *     <li>Removes lines with properties in front of the first text-line.
+	 * </ul>
+	 */
+	private static ArrayList<String> cleanInputString(Iterable<String> inputLines) {
+		// Split lines at line breaks
+		// In the end we will have a list with one line per element
+		ArrayList<String> lines = new ArrayList<>();
+		for (String line : inputLines) {
+			lines.addAll(Arrays.asList(line.split("\\r?\\n")));
+		}
+
+		// Remove any special lines at the start (a real text line should be first)
+		while (!lines.isEmpty() && isTaggedInteractive(lines.get(0))) {
+			lines.remove(0);
+		}
+
+		return lines;
+	}
 
 
 	private static LinkedList<InteractiveMessagePart> parse(final Iterable<String> inputLines) {
@@ -477,6 +594,7 @@ public class FancyMessageFormatConverter {
 
 
 	interface Tag {
+		/** Tag text(s) used in the FancyMessageFormat (The text between '[' and ']') */
 		String[] getTags();
 	}
 
