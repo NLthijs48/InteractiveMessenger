@@ -49,26 +49,56 @@ The below examples assume writing the format in YAML format.
 #### Simple messages
 A simple message without any formatting.
 ```yaml
-info-noPermission: "You do not have permission to use that command!"
+message: "You do not have permission to use that command!"
 ```
 ![](https://cloud.githubusercontent.com/assets/6951068/15986885/2dbd4016-3015-11e6-9525-0cbea6155a78.png)
 
+
 A message that is bold and red to make it look more serious.
 ```yaml
-info-noPermission: "[red][bold]You really do not have permission!"
+message: "[red][bold]You really do not have permission!"
 ```
 ![](https://cloud.githubusercontent.com/assets/6951068/15986886/2e8b1310-3015-11e6-853b-3b497a304c6d.png)
 
+
 A message with more color and format changes.
 ```yaml
-info-noPermission: "[red][bold]You[/bold] really do not have [green][underline]permission[reset]!"
+message: "[red][bold]You[/bold] really do not have [green][underline]permission[reset]!"
 ```
 ![](https://cloud.githubusercontent.com/assets/6951068/15986887/2f399ad4-3015-11e6-945d-94db3aa52579.png)
 
 
+A multi-line message.
+```yaml
+message:
+  - "First line"
+  - "[red], still on the first line[break]"
+  - "Second line because of the break above"
+  - ", but no color."
+```
+![](https://cloud.githubusercontent.com/assets/6951068/15987126/9c46c8b0-301d-11e6-8ca8-3bae662d0a0e.png)
 
 
+#### Using hover/click parts
 
+A message with some hover tooltips, each hover will start on a new line.
+```yaml
+message:
+  - "Hello there!"
+  - "    hover: Have a good day!"
+  - "    hover: Second tooltip line :)"
+```
+![](https://cloud.githubusercontent.com/assets/6951068/15987136/170a00f8-301e-11e6-8e46-84c5c21d5204.png)
+
+
+A message with a tooltip and command.
+```yaml
+message:
+  - "Hello there!"
+  - "    hover: Click me to use /help!"
+  - "    command: /help"
+```
+![](https://cloud.githubusercontent.com/assets/6951068/15987147/68c905a6-301e-11e6-8cd2-e3c7ca329855.png)
 
 
 
