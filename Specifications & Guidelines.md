@@ -1,7 +1,4 @@
-FancyMessageFormat
-==================
-
-## Format Specifications
+## Specifications
 #### Colors & Formatting:
 * Colors and formatting normally go on until changed/removed, but they reset on new lines
 * Color tags:
@@ -42,6 +39,39 @@ FancyMessageFormat
 * Placing "[esc][esc]" in the text will result in the text "[esc]" being printed, the first escape will be handled as such, this will escape [ and therefore the text behind this will be "esc]" and this is just text
 * Also works for variables
 
-## Format Guidelines
+## Guidelines
 * Use lowercase characters for tags
 * When using a special effect tag indent the line by 4 spaces (up for debate)
+
+## Examples
+The below examples assume writing the format in YAML format.
+
+#### Simple messages
+A simple message without any formatting.
+```yaml
+info-noPermission: "You do not have permission to use that command!"
+```
+![](https://cloud.githubusercontent.com/assets/6951068/15986885/2dbd4016-3015-11e6-9525-0cbea6155a78.png)
+
+A message that is bold and red to make it look more serious.
+```yaml
+info-noPermission: "[red][bold]You really do not have permission!"
+```
+![](https://cloud.githubusercontent.com/assets/6951068/15986886/2e8b1310-3015-11e6-853b-3b497a304c6d.png)
+
+A message with more color and format changes.
+```yaml
+info-noPermission: "[red][bold]You[/bold] really do not have [green][underline]permission[reset]!"
+```
+![](https://cloud.githubusercontent.com/assets/6951068/15986887/2f399ad4-3015-11e6-945d-94db3aa52579.png)
+
+
+
+
+
+
+
+
+
+
+
