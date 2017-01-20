@@ -1,7 +1,11 @@
-FancyMessageFormat
-==================
+InteractiveMessaging
+====================
 
 A format for text in config files to make use of the fancy Minecraft chat features like click, hover, suggest, etc.
+
+## Authors
+* **Thijs aka NLThijs48:** Initial code structure, refactoring and getting it production ready
+* **Tobias aka Phoenix:** Initial code structure and initial parser
 
 ## Requirements
 * Support for click effects, when a player clicks on text it will execute something
