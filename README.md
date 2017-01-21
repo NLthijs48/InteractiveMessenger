@@ -3,6 +3,10 @@ InteractiveMessaging
 
 A format for text in config files to make use of the fancy Minecraft chat features like click, hover, suggest, etc.
 
+## Information
+* **Build server:** http://wiefferink.me:8080/job/InteractiveMessenger/
+* **Javadocs:** https://wiefferink.me/InteractiveMessenger/javadocs
+
 ## Authors
 * **Thijs aka NLThijs48:** Initial code structure, refactoring and getting it production ready
 * **Tobias aka Phoenix:** Initial code structure and initial parser
