@@ -26,6 +26,7 @@ public class LanguageManager implements MessageProvider {
 	 * @param jarLanguagePath The path in the jar to the folder with the language files
 	 * @param currentLanguageName The name of the language that should be active (without '.yml')
 	 * @param defaultLanguageName The name of the language that
+	 * @param chatPrefix The chat prefix for Message#prefix()
 	 */
 	public LanguageManager(JavaPlugin plugin, String jarLanguagePath, String currentLanguageName, String defaultLanguageName, List<String> chatPrefix) {
 		this.plugin = plugin;
