@@ -24,6 +24,13 @@ public class TextMessagePart {
 
 	@Override
 	public String toString() {
-		return "TextMessagePart(text:"+text+", color:"+color+", formatting:"+formatting.toString()+")";
+		StringBuilder result = new StringBuilder("TextMessagePart(text:"+text);
+		if(color != null) {
+			result.append(", color:").append(color);
+		}
+		if(!formatting.isEmpty()) {
+			result.append(", formatting:").append(formatting);
+		}
+		return result.toString();
 	}
 }

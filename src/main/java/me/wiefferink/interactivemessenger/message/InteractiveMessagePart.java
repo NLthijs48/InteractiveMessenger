@@ -22,6 +22,22 @@ public class InteractiveMessagePart extends LinkedList<TextMessagePart> {
 
 	@Override
 	public String toString() {
-		return "InteractiveMessagePart(textMessageParts:"+super.toString()+", onClick:"+onClick+", clickContent:"+clickContent+", onHover:"+onHover+", hoverContent:"+hoverContent+", newline:"+newline+")";
+		StringBuilder result = new StringBuilder("InteractiveMessagePart(textMessageParts:"+super.toString());
+		if(onClick != null) {
+			result.append(", onClick:").append(onClick);
+		}
+		if(clickContent != null && !clickContent.isEmpty()) {
+			result.append(", clickContent:").append(clickContent);
+		}
+		if(onHover != null) {
+			result.append(", onHover:").append(onHover);
+		}
+		if(hoverContent != null) {
+			result.append(", hoverContent:").append(hoverContent);
+		}
+		if(newline) {
+			result.append(", newline:").append(newline);
+		}
+		return result.toString();
 	}
 }
