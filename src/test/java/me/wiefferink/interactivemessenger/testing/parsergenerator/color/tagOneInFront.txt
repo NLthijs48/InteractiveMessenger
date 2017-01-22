@@ -1,0 +1,8 @@
+[green]In green
+
+[
+  {
+    "text": "In green",
+    "color": "green"
+  }
+]

@@ -3,9 +3,9 @@ package me.wiefferink.interactivemessenger.generators;
 import me.wiefferink.interactivemessenger.message.InteractiveMessage;
 import me.wiefferink.interactivemessenger.message.InteractiveMessagePart;
 import me.wiefferink.interactivemessenger.message.TextMessagePart;
+import me.wiefferink.interactivemessenger.message.enums.Click;
 import me.wiefferink.interactivemessenger.message.enums.Color;
 import me.wiefferink.interactivemessenger.message.enums.Format;
-import me.wiefferink.interactivemessenger.message.enums.Click;
 import me.wiefferink.interactivemessenger.message.enums.Hover;
 
 import java.util.ArrayList;
@@ -57,12 +57,11 @@ public class TellrawGenerator {
 			combine.add(part);
 			if(part.newline || message.isEmpty()) {
 				if(combine.size() == 1) {
-					StringBuilder nextLine = new StringBuilder("[");
+					StringBuilder nextLine = new StringBuilder();
 					toJSON(combine.get(0), nextLine);
-					nextLine.append("]");
 					result.add(nextLine.toString());
 				} else if(combine.size() > 1) {
-					StringBuilder nextLine = new StringBuilder("[{\"text\":\"\",\"extra\":[");
+					StringBuilder nextLine = new StringBuilder("{\"text\":\"\",\"extra\":[");
 					for(int i = 0; i < combine.size(); i++) {
 						// Skip possibly last empty InteractiveMessagePart which has newline set
 						if(!combine.get(i).isEmpty()) {
@@ -72,7 +71,7 @@ public class TellrawGenerator {
 							toJSON(combine.get(i), nextLine);
 						}
 					}
-					nextLine.append("]}]");
+					nextLine.append("]}");
 					result.add(nextLine.toString());
 				}
 				combine.clear();

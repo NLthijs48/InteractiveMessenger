@@ -1,0 +1,20 @@
+Message with [green]a part in green and [red]a part in red
+
+[
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "Message with "
+      },
+      {
+        "text": "a part in green and ",
+        "color": "green"
+      },
+      {
+        "text": "a part in red",
+        "color": "red"
+      }
+    ]
+  }
+]

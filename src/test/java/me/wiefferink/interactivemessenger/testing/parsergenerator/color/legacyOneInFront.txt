@@ -1,0 +1,8 @@
+&aIn green
+
+[
+  {
+    "text": "In green",
+    "color": "green"
+  }
+]
