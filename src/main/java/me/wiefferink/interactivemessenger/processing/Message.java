@@ -11,6 +11,8 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -356,6 +358,12 @@ public class Message {
 				((CommandSender)target).sendMessage(plainMessage);
 			} else if(target instanceof Logger) {
 				((Logger)target).info(plainMessage);
+			} else if(target instanceof BufferedWriter) {
+				try {
+					((BufferedWriter)target).write(plainMessage);
+				} catch(IOException e) {
+					warn("Exception while writing to BufferedWriter:", ExceptionUtils.getStackTrace(e));
+				}
 			} else {
 				warn("Could not send message (key: "+key+") because the target ("+target.getClass().getName()+") is not recognized, message: "+plainMessage);
 			}
