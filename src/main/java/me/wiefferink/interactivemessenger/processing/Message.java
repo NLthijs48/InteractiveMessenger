@@ -195,6 +195,14 @@ public class Message {
 	}
 
 	/**
+	 * Check if the message is empty
+	 * @return true if the message is empty, otherwise false
+	 */
+	public boolean isEmpty() {
+		return message.isEmpty();
+	}
+
+	/**
 	 * Add the default prefix to the message
 	 * @param doIt true if the prefix should be added, otherwise false
 	 * @return this
@@ -253,6 +261,35 @@ public class Message {
 	 */
 	public Message append(String line) {
 		message.add(line);
+		return this;
+	}
+
+	/**
+	 * Prepend lines to the message
+	 * @param lines The lines to prepend
+	 * @return this
+	 */
+	public Message prepend(List<String> lines) {
+		message.addAll(0, lines);
+		return this;
+	}
+
+	/**
+	 * Prepend a message to this message
+	 * @param message The message to prepend
+	 * @return this
+	 */
+	public Message prepend(Message message) {
+		return prepend(message.get());
+	}
+
+	/**
+	 * Prepend lines to the message
+	 * @param line The line to prepend
+	 * @return this
+	 */
+	public Message prepend(String line) {
+		message.add(0, line);
 		return this;
 	}
 
