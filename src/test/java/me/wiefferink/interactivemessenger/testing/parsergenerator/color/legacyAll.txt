@@ -1,0 +1,230 @@
+&0black, §0black,
+&1dark_blue, §1dark_blue,
+&2dark_green, §2dark_green,
+&3dark_aqua, §3dark_aqua,
+&4dark_red, §4dark_red,
+&5dark_purple, §5dark_purple,
+&6gold, §6gold,
+&7gray, §7gray,
+&8dark_gray, §8dark_gray,
+&9blue, §9blue,
+&agreen, §agreen,
+&baqua, §baqua,
+&cred, §cred,
+&dlight_purple, §dlight_purple,
+&eyellow, §eyellow,
+&fwhite, §fwhite
+
+[
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "black, ",
+            "color": "black"
+          },
+          {
+            "text": "black,",
+            "color": "black"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "dark_blue, ",
+            "color": "dark_blue"
+          },
+          {
+            "text": "dark_blue,",
+            "color": "dark_blue"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "dark_green, ",
+            "color": "dark_green"
+          },
+          {
+            "text": "dark_green,",
+            "color": "dark_green"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "dark_aqua, ",
+            "color": "dark_aqua"
+          },
+          {
+            "text": "dark_aqua,",
+            "color": "dark_aqua"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "dark_red, ",
+            "color": "dark_red"
+          },
+          {
+            "text": "dark_red,",
+            "color": "dark_red"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "dark_purple, ",
+            "color": "dark_purple"
+          },
+          {
+            "text": "dark_purple,",
+            "color": "dark_purple"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "gold, ",
+            "color": "gold"
+          },
+          {
+            "text": "gold,",
+            "color": "gold"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "gray, ",
+            "color": "gray"
+          },
+          {
+            "text": "gray,",
+            "color": "gray"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "dark_gray, ",
+            "color": "dark_gray"
+          },
+          {
+            "text": "dark_gray,",
+            "color": "dark_gray"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "blue, ",
+            "color": "blue"
+          },
+          {
+            "text": "blue,",
+            "color": "blue"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "green, ",
+            "color": "green"
+          },
+          {
+            "text": "green,",
+            "color": "green"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "aqua, ",
+            "color": "aqua"
+          },
+          {
+            "text": "aqua,",
+            "color": "aqua"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "red, ",
+            "color": "red"
+          },
+          {
+            "text": "red,",
+            "color": "red"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "light_purple, ",
+            "color": "light_purple"
+          },
+          {
+            "text": "light_purple,",
+            "color": "light_purple"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "yellow, ",
+            "color": "yellow"
+          },
+          {
+            "text": "yellow,",
+            "color": "yellow"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "white, "
+          },
+          {
+            "text": "white"
+          }
+        ]
+      }
+    ]
+  }
+]

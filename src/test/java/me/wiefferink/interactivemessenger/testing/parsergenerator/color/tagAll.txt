@@ -1,0 +1,167 @@
+[black]black,
+[dark_blue]dark_blue, [darkblue]darkblue,
+[dark_green]dark_green, [darkgreen]darkgreen,
+[dark_aqua]dark_aqua, [darkaqua]darkaqua,
+[dark_red]dark_red, [darkred]darkred,
+[dark_purple]dark_purple, [darkpurple]darkpurple,
+[gold]gold,
+[gray]gray, [grey]grey,
+[dark_gray]dark_gray, [darkgray]darkgray, [dark_grey]dark_grey, [darkgrey]darkgrey,
+[blue]blue,
+[green]green,
+[aqua]aqua,
+[red]red,
+[light_purple]light_purple, [lightpurple]lightpurple,
+[yellow]yellow,
+[white]white
+
+[
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "black,",
+        "color": "black"
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "dark_blue, ",
+            "color": "dark_blue"
+          },
+          {
+            "text": "darkblue,",
+            "color": "dark_blue"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "dark_green, ",
+            "color": "dark_green"
+          },
+          {
+            "text": "darkgreen,",
+            "color": "dark_green"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "dark_aqua, ",
+            "color": "dark_aqua"
+          },
+          {
+            "text": "darkaqua,",
+            "color": "dark_aqua"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "dark_red, ",
+            "color": "dark_red"
+          },
+          {
+            "text": "darkred,",
+            "color": "dark_red"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "dark_purple, ",
+            "color": "dark_purple"
+          },
+          {
+            "text": "darkpurple,",
+            "color": "dark_purple"
+          }
+        ]
+      },
+      {
+        "text": "gold,",
+        "color": "gold"
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "gray, ",
+            "color": "gray"
+          },
+          {
+            "text": "grey,",
+            "color": "gray"
+          }
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "dark_gray, ",
+            "color": "dark_gray"
+          },
+          {
+            "text": "darkgray, ",
+            "color": "dark_gray"
+          },
+          {
+            "text": "dark_grey, ",
+            "color": "dark_gray"
+          },
+          {
+            "text": "darkgrey,",
+            "color": "dark_gray"
+          }
+        ]
+      },
+      {
+        "text": "blue,",
+        "color": "blue"
+      },
+      {
+        "text": "green,",
+        "color": "green"
+      },
+      {
+        "text": "aqua,",
+        "color": "aqua"
+      },
+      {
+        "text": "red,",
+        "color": "red"
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "light_purple, ",
+            "color": "light_purple"
+          },
+          {
+            "text": "lightpurple,",
+            "color": "light_purple"
+          }
+        ]
+      },
+      {
+        "text": "yellow,",
+        "color": "yellow"
+      },
+      {
+        "text": "white"
+      }
+    ]
+  }
+]

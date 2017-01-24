@@ -4,11 +4,7 @@ import me.wiefferink.interactivemessenger.generators.ConsoleGenerator;
 import me.wiefferink.interactivemessenger.message.InteractiveMessage;
 import me.wiefferink.interactivemessenger.message.InteractiveMessagePart;
 import me.wiefferink.interactivemessenger.message.TextMessagePart;
-import me.wiefferink.interactivemessenger.message.enums.Control;
-import me.wiefferink.interactivemessenger.message.enums.Color;
-import me.wiefferink.interactivemessenger.message.enums.Format;
-import me.wiefferink.interactivemessenger.message.enums.Click;
-import me.wiefferink.interactivemessenger.message.enums.Hover;
+import me.wiefferink.interactivemessenger.message.enums.*;
 import org.bukkit.ChatColor;
 
 import java.util.*;
@@ -19,7 +15,7 @@ public class YamlParser {
 
 	public static final char ESCAPE_CHAR = '\\';
 	public static final char SIMPLE_FORMAT_RESET_CHAR = 'r';
-	public static final Pattern tagPattern = Pattern.compile("\\[[/a-zA-Z1-9]+\\]|[&"+ChatColor.COLOR_CHAR+"][1-9a-zA-Z]");
+	public static final Pattern tagPattern = Pattern.compile("\\[[/a-zA-Z1-9_]+\\]|[&"+ChatColor.COLOR_CHAR+"][0-9a-zA-Z]");
 
 	// Lookup table for all continuous enums ([<tag>])
 	private static final HashMap<String, Object> BRACKET_TAGS = new HashMap<String, Object>() {{
