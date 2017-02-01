@@ -1,5 +1,7 @@
 [green]In green
 
+§aIn green
+
 [
   {
     "text": "In green",

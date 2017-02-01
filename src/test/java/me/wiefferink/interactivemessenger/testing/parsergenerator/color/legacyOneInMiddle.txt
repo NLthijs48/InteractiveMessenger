@@ -1,5 +1,7 @@
 Message with &aa part in green
 
+Message with §aa part in green
+
 [
   {
     "text": "",

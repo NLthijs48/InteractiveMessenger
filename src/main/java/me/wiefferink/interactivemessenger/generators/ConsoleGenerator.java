@@ -60,7 +60,6 @@ public class ConsoleGenerator {
 		for(InteractiveMessagePart part : message) {
 			toSimpleString(part, result);
 		}
-
 		return result.toString();
 	}
 

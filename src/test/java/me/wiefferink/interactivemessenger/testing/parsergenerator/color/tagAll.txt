@@ -15,6 +15,8 @@
 [yellow]yellow,
 [white]white
 
+§0black,§1dark_blue, §1darkblue,§2dark_green, §2darkgreen,§3dark_aqua, §3darkaqua,§4dark_red, §4darkred,§5dark_purple, §5darkpurple,§6gold,§7gray, §7grey,§8dark_gray, §8darkgray, §8dark_grey, §8darkgrey,§9blue,§agreen,§baqua,§cred,§dlight_purple, §dlightpurple,§eyellow,§fwhite
+
 [
   {
     "text": "",

@@ -4,6 +4,7 @@ import me.wiefferink.interactivemessenger.message.enums.Click;
 import me.wiefferink.interactivemessenger.message.enums.Hover;
 
 import java.util.LinkedList;
+import java.util.Objects;
 
 /**
  * Holds a string with interactive formatting.
@@ -40,4 +41,27 @@ public class InteractiveMessagePart extends LinkedList<TextMessagePart> {
 		}
 		return result.toString();
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if(o == this) {
+			return true;
+		}
+		if(!(o instanceof InteractiveMessagePart)) {
+			return false;
+		}
+		InteractiveMessagePart part = (InteractiveMessagePart)o;
+		return newline == part.newline &&
+				onClick == part.onClick &&
+				Objects.equals(clickContent, part.clickContent) &&
+				onHover == part.onHover &&
+				Objects.equals(hoverContent, part.hoverContent) &&
+				super.equals(o);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(newline, onClick, clickContent, onHover, hoverContent, super.hashCode());
+	}
+
 }

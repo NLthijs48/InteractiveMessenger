@@ -4,6 +4,7 @@ import me.wiefferink.interactivemessenger.message.enums.Color;
 import me.wiefferink.interactivemessenger.message.enums.Format;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -33,4 +34,24 @@ public class TextMessagePart {
 		}
 		return result.toString();
 	}
+
+	@Override
+	public boolean equals(Object o) {
+		if(o == this) {
+			return true;
+		}
+		if(!(o instanceof TextMessagePart)) {
+			return false;
+		}
+		TextMessagePart part = (TextMessagePart)o;
+		return Objects.equals(text, part.text) &&
+				color == part.color &&
+				Objects.equals(formatting, part.formatting);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(text, color, formatting);
+	}
+
 }

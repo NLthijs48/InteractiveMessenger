@@ -9,15 +9,11 @@ public class ParserGeneratorTestSuite extends TestSuite {
 
 	public ParserGeneratorTestSuite(File directory, boolean first) {
 		super(directory.getName());
-		//Log.info("\n\n\n");
-		//Log.info("╔═══════════════════════════════════════════════════════════════════════════════");
-		//Log.info("║ Folder:", RunTests.getName(directory));
-		//Log.info("╚═══════════════════════════════════════════════════════════════════════════════");
 
 		// Create a testsuite for each directory
 		File[] files = directory.listFiles();
 		if(files == null) {
-			Log.info("No files found at: "+directory.getAbsolutePath());
+			Log.info("No files found at:", directory.getAbsolutePath());
 			return;
 		}
 		for(File file : files) {

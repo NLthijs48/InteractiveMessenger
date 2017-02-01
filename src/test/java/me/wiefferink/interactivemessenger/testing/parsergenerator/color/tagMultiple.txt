@@ -1,5 +1,7 @@
 Message with [green]a part in green and [red]a part in red
 
+Message with §aa part in green and §ca part in red
+
 [
   {
     "text": "",

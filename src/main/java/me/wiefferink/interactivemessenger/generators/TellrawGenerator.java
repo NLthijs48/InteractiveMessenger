@@ -49,6 +49,7 @@ public class TellrawGenerator {
 	 * @return JSON string that can be send to a player (multiple means line breaks have been used)
 	 */
 	public static List<String> generate(InteractiveMessage message) {
+		message = message.copy(); // Don't destroy the message
 		List<String> result = new ArrayList<>();
 
 		List<InteractiveMessagePart> combine = new ArrayList<>(); // Part that are combined to a line
