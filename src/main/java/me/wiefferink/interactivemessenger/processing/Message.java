@@ -201,7 +201,12 @@ public class Message {
 	 * @return true if the message is empty, otherwise false
 	 */
 	public boolean isEmpty() {
-		return message.isEmpty();
+		for(String part : message) {
+			if(!part.isEmpty()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**
