@@ -4,25 +4,35 @@ InteractiveMessaging
 A format for text in config files to make use of the fancy Minecraft chat features like click, hover, suggest, etc.
 
 ## Information
-* **Build server:** http://wiefferink.me:8080/job/InteractiveMessenger/
+* **Build server:** http://jenkins.wiefferink.me/job/InteractiveMessenger/
 * **Javadocs:** https://wiefferink.me/InteractiveMessenger/javadocs
 
 ## Authors
 * **Thijs aka NLThijs48:** Initial code structure, refactoring and getting it production ready
 * **Tobias aka Phoenix:** Initial code structure and initial parser
 
-## Requirements
-* Support for click effects, when a player clicks on text it will execute something
-  * Execute a command (will always be executed by the player itself)
-  * Open a link
-  * Suggest a command (put certain text in the chat line)
-* Support for hover effects, when a player hovers text it will display some info
-  * Multiple lines for hover text
-* Support for colors and formatting
-* Support for multiple lines in a single message (go to the next line)
+## Usage
+1. Add Maven repository:
 
-## Other targets
-* Easy to read format, you can see what does what
-  * Format allows to read the whole message text ignoring attributes (hover etc)
-* Not too much overhead for defining the message
-  * Problem with BBCode
+    ```xml
+    <repositories>
+      <repository>
+        <id>nlthijs48</id>
+        <url>http://maven.wiefferink.me</url>
+      </repository>
+    </repositories>
+    ```
+1. Add Maven dependency:
+
+    ```xml
+    <dependencies>
+      <dependency>
+        <groupId>me.wiefferink</groupId>
+        <artifactId>interactivemessenger</artifactId>
+        <version>1.0</version>
+      </dependency>
+    </dependencies>
+    ```
+1. Use the library classes depending on how much of the InteractiveMessenger you want to use.
+  * TODO: explain possible levels of integration and how to do them
+  * TODO: add image showing integration levels
