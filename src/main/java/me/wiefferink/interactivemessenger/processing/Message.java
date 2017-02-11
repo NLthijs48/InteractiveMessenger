@@ -32,11 +32,11 @@ public class Message {
 	public static final String VARIABLESTART = "%";
 	public static final String VARIABLEEND = "%";
 	public static final String LANGUAGEVARIABLE = "lang:";
-	public static final Pattern variablePattern = Pattern.compile(Pattern.quote(VARIABLESTART)+"[a-zA-Z]+"+Pattern.quote(VARIABLEEND));
+	public static final Pattern variablePattern = Pattern.compile(Pattern.quote(VARIABLESTART)+"[a-zA-Z]+?"+Pattern.quote(VARIABLEEND));
 	public static final Pattern variables = Pattern.compile(
 			Pattern.quote(VARIABLESTART)+
-					Pattern.quote(LANGUAGEVARIABLE)+"[a-zA-Z-]+"+    // Language key
-					"(\\|(.*?\\|)+)?"+                                // Optional message arguments
+					Pattern.quote(LANGUAGEVARIABLE)+"[a-zA-Z-]+?"+    // Language key
+					"(\\|(.*?\\|)+?)?"+                                // Optional message arguments
 					Pattern.quote(VARIABLEEND)
 	);
 

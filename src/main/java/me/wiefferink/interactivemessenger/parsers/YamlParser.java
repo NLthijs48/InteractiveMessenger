@@ -15,7 +15,7 @@ public class YamlParser {
 
 	public static final char ESCAPE_CHAR = '\\';
 	public static final char SIMPLE_FORMAT_RESET_CHAR = 'r';
-	public static final Pattern tagPattern = Pattern.compile("\\[[/a-zA-Z1-9_]+\\]|[&"+ChatColor.COLOR_CHAR+"][0-9a-zA-Z]");
+	public static final Pattern tagPattern = Pattern.compile("\\[[/a-zA-Z1-9_]+?\\]|[&"+ChatColor.COLOR_CHAR+"][0-9a-zA-Z]");
 
 	// Lookup table for all continuous enums ([<tag>])
 	private static final HashMap<String, Object> BRACKET_TAGS = new HashMap<String, Object>() {{
