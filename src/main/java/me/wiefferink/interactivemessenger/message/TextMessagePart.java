@@ -3,7 +3,7 @@ package me.wiefferink.interactivemessenger.message;
 import me.wiefferink.interactivemessenger.message.enums.Color;
 import me.wiefferink.interactivemessenger.message.enums.Format;
 
-import java.util.HashSet;
+import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -13,7 +13,7 @@ import java.util.Set;
 public class TextMessagePart {
 	public String text = "";
 	public Color color = null;
-	public Set<Format> formatting = new HashSet<>();
+	public Set<Format> formatting = EnumSet.noneOf(Format.class);
 
 	/**
 	 * Check if this part has formatting
