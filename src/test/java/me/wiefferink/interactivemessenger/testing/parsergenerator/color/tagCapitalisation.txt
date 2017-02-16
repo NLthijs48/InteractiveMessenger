@@ -1,0 +1,39 @@
+[Green]a part in green [white] white [gREen]green, [white]white, [GREEN]last green
+[RED]a part in red
+
+§aa part in green §f white §agreen, §fwhite, §alast green§ca part in red
+
+[
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "a part in green ",
+            "color": "green"
+          },
+          {
+            "text": " white "
+          },
+          {
+            "text": "green, ",
+            "color": "green"
+          },
+          {
+            "text": "white, "
+          },
+          {
+            "text": "last green",
+            "color": "green"
+          }
+        ]
+      },
+      {
+        "text": "a part in red",
+        "color": "red"
+      }
+    ]
+  }
+]

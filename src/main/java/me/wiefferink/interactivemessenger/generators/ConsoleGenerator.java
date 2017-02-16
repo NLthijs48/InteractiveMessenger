@@ -8,6 +8,8 @@ import me.wiefferink.interactivemessenger.message.enums.Format;
 import org.bukkit.ChatColor;
 
 import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.Set;
 
 public class ConsoleGenerator {
 
@@ -57,44 +59,42 @@ public class ConsoleGenerator {
 	 */
 	public static String generate(InteractiveMessage message) {
 		StringBuilder result = new StringBuilder();
-		for(InteractiveMessagePart part : message) {
-			toSimpleString(part, result);
+		Color activeColor = Color.WHITE;
+		Set<Format> activeFormatting = EnumSet.noneOf(Format.class);
+		for(InteractiveMessagePart interactivePart : message) {
+			for(TextMessagePart textPart : interactivePart) {
+				// Use reset if there is formatting active we need to get rid of
+				if(!textPart.formatting.containsAll(activeFormatting)) {
+					result.append(ChatColor.RESET);
+					activeColor = Color.WHITE;
+					activeFormatting.clear();
+				}
+				// If there is no incoming color and it is not already white set it to white
+				else if(textPart.color == null && activeColor != Color.WHITE) {
+					result.append(ChatColor.WHITE);
+					activeColor = Color.WHITE;
+				}
+
+				// Color
+				if(textPart.color != null && activeColor != textPart.color) {
+					result.append(ChatColor.COLOR_CHAR).append(colorCode.get(textPart.color));
+					activeColor = textPart.color;
+				}
+
+				// Formatting
+				Set<Format> formattingToAdd = EnumSet.noneOf(Format.class);
+				formattingToAdd.addAll(textPart.formatting);
+				formattingToAdd.removeAll(activeFormatting);
+				for(Format format : formattingToAdd) {
+					result.append(ChatColor.COLOR_CHAR).append(formatCode.get(format));
+					activeFormatting.add(format);
+				}
+
+				// Text
+				result.append(textPart.text);
+			}
 		}
 		return result.toString();
-	}
-
-	/**
-	 * Append the message content to the StringBuilder
-	 * @param sb The StringBuilder to append the message to
-	 */
-	private static StringBuilder toSimpleString(InteractiveMessagePart part, StringBuilder sb) {
-		for(TextMessagePart textPart : part) {
-			toSimpleString(textPart, sb);
-		}
-
-		if(part.newline) {
-			sb.append("\n");
-		}
-		return sb;
-	}
-
-	/**
-	 * Get a simple colored/formatted string
-	 * @param sb The StringBuilder to append the result to
-	 * @return StringBuilder with the message appended
-	 */
-	private static StringBuilder toSimpleString(TextMessagePart part, StringBuilder sb) {
-		// Color
-		if(part.color != null) {
-			sb.append(ChatColor.COLOR_CHAR).append(colorCode.get(part.color));
-		}
-		// Formatting
-		for(Format format : part.formatting) {
-			sb.append(ChatColor.COLOR_CHAR).append(formatCode.get(format));
-		}
-		// Text
-		sb.append(part.text);
-		return sb;
 	}
 
 }
