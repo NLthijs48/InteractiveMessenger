@@ -279,15 +279,23 @@ public class YamlParser {
         // Find matching formatting and control sequences
         Matcher matcher = tagPattern.matcher(line);
 		while(matcher.find()) {
-			boolean closing = false;
+            // Check if escaped, backslashes escape backslashes, so uneven number actually escapes the found match
+            int backslashes = 0;
+            int index = matcher.start() - 1;
+            while (index >= 0 && line.charAt(index) == ESCAPE_CHAR) {
+                backslashes++;
+                index--;
+            }
+            if (backslashes % 2 == 1) {
+                continue;
+            }
+
+            // Process the found match
+            boolean closing = false;
 			Object tag;
             if (matcher.group().equals("\\n")) {
                 tag = Control.BREAK;
             } else if (matcher.group().startsWith("&") || matcher.group().startsWith(ChatColor.COLOR_CHAR + "")) {
-                // Skip escaped color enums
-				if(matcher.start() > 0 && line.charAt(matcher.start()-1) == ESCAPE_CHAR) {
-					continue;
-				}
 				tag = NATIVE_TAGS.get(matcher.group().charAt(1)+"".toLowerCase());
 			} else {
 				String content = matcher.group().substring(1, matcher.group().length()-1).toLowerCase();
@@ -375,8 +383,8 @@ public class YamlParser {
 	private static final List<String> toEscape = Arrays.asList(
 			ESCAPE_CHAR+"",    // Used for escapes, must be first
 			"%",            // Variables
-			"]",            // Formatting and control enums
-			"&",            // Traditional color formatting
+            "[",            // Formatting and control enums
+            "&",            // Traditional color formatting
 			ChatColor.COLOR_CHAR+"" // Legacy formatting enums
 	);
 

@@ -1,0 +1,19 @@
+[red]red text \[reset], still red!\[reset][blue]\[reset], now blue
+
+§cred text [reset], still red![reset]§9[reset], now blue
+
+[
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "red text [reset], still red![reset]",
+        "color": "red"
+      },
+      {
+        "text": "[reset], now blue",
+        "color": "blue"
+      }
+    ]
+  }
+]
