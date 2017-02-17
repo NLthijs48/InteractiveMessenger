@@ -39,7 +39,8 @@ public class InteractiveMessagePart extends LinkedList<TextMessagePart> {
 		if(newline) {
 			result.append(", newline:").append(newline);
 		}
-		return result.toString();
+        result.append(")");
+        return result.toString();
 	}
 
 	@Override

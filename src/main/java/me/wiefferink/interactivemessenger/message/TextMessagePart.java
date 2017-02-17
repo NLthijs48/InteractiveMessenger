@@ -32,6 +32,7 @@ public class TextMessagePart {
 		if(!formatting.isEmpty()) {
 			result.append(", formatting:").append(formatting);
 		}
+		result.append(")");
 		return result.toString();
 	}
 
