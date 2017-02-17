@@ -1,0 +1,35 @@
+§lbold,§r
+§mstrikethrough,§r
+§nunderline,§r
+§oitalic,§r
+§kobfuscated,§r
+
+§lbold,§r§sstrikethrough,§r§nunderline,§r§oitalic,§r§kobfuscated,
+
+[
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "bold,",
+        "bold": true
+      },
+      {
+        "text": "strikethrough,",
+        "strikethrough": true
+      },
+      {
+        "text": "underline,",
+        "underlined": true
+      },
+      {
+        "text": "italic,",
+        "italic": true
+      },
+      {
+        "text": "obfuscated,",
+        "obfuscated": true
+      }
+    ]
+  }
+]
