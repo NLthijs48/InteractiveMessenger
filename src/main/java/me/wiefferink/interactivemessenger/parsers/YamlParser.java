@@ -15,7 +15,7 @@ public class YamlParser {
 
 	public static final char ESCAPE_CHAR = '\\';
 	public static final char SIMPLE_FORMAT_RESET_CHAR = 'r';
-	public static final Pattern tagPattern = Pattern.compile("\\[[/a-zA-Z1-9_]+?\\]|[&"+ChatColor.COLOR_CHAR+"][0-9a-zA-Z]");
+    public static final Pattern tagPattern = Pattern.compile("(\\[[/a-zA-Z1-9_]+?\\])|([&" + Pattern.quote(ChatColor.COLOR_CHAR + "") + "][0-9a-zA-Z])|(\\\\n)");
 
 	// Lookup table for all continuous enums ([<tag>])
 	private static final HashMap<String, Object> BRACKET_TAGS = new HashMap<String, Object>() {{
@@ -140,13 +140,11 @@ public class YamlParser {
 				Color currentLineColor = currentColor;
 				Set<Format> currentLineFormatting = currentFormatting;
 				LinkedList<TextMessagePart> targetList = messagePart;
-				boolean parseBreak = true;
 				if(isHoverLine) {
 					// Reset - use own
 					currentLineColor = null;
 					currentLineFormatting = new HashSet<>();
 					targetList = messagePart.hoverContent;
-					parseBreak = false;
 
 					// Add line break after previous hover line
 					if(!targetList.isEmpty()) {
@@ -157,8 +155,8 @@ public class YamlParser {
 				// Split into pieces at places where formatting changes
 				while(!line.isEmpty()) {
 					String textToAdd;
-					TaggedContent nextTag = getNextTag(line, parseBreak);
-					boolean tagged = nextTag != null;
+                    TaggedContent nextTag = getNextTag(line);
+                    boolean tagged = nextTag != null;
 
 					if(!tagged) {
 						textToAdd = line;
@@ -195,7 +193,8 @@ public class YamlParser {
 							} else {
 								messagePart.newline = true;
 								currentLineFormatting.clear();
-								continue lineLoop;
+                                // TODO: Remove this and support multiple line breaks and even content after a break?
+                                continue lineLoop;
 							}
 						} else if(tag == Control.RESET) {
 							currentLineFormatting.clear();
@@ -276,15 +275,16 @@ public class YamlParser {
 	 * @return The tag (plus its preceding and subsequent content) if found.
 	 * Null if nothing is found.
 	 */
-	private static TaggedContent getNextTag(String line, boolean parseBreak) {
-		// TODO do something with parseBreak or remove
-		// Tags containing letters and numbers and native format (captures too much, but will continue search)
-		Matcher matcher = tagPattern.matcher(line);
+    private static TaggedContent getNextTag(String line) {
+        // Find matching formatting and control sequences
+        Matcher matcher = tagPattern.matcher(line);
 		while(matcher.find()) {
 			boolean closing = false;
 			Object tag;
-			if(matcher.group().startsWith("&") || matcher.group().startsWith(ChatColor.COLOR_CHAR+"")) {
-				// Skip escaped color enums
+            if (matcher.group().equals("\\n")) {
+                tag = Control.BREAK;
+            } else if (matcher.group().startsWith("&") || matcher.group().startsWith(ChatColor.COLOR_CHAR + "")) {
+                // Skip escaped color enums
 				if(matcher.start() > 0 && line.charAt(matcher.start()-1) == ESCAPE_CHAR) {
 					continue;
 				}

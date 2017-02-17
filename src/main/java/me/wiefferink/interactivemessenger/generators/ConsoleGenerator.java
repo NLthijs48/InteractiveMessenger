@@ -93,7 +93,12 @@ public class ConsoleGenerator {
 				// Text
 				result.append(textPart.text);
 			}
-		}
+
+            // Add newlines
+            if (interactivePart.newline) {
+                result.append("\n");
+            }
+        }
 		return result.toString();
 	}
 

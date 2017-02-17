@@ -1,0 +1,14 @@
+first line\n
+second line
+
+first line
+second line
+
+[
+  {
+    "text": "first line"
+  },
+  {
+    "text": "second line"
+  }
+]
