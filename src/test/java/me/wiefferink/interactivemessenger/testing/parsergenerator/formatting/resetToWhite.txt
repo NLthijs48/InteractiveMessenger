@@ -1,0 +1,23 @@
+message [blue]in blue[break]
+simple second line
+
+message §9in blue
+§fsimple second line
+
+[
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "message "
+      },
+      {
+        "text": "in blue",
+        "color": "blue"
+      }
+    ]
+  },
+  {
+    "text": "simple second line"
+  }
+]

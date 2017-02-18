@@ -1,0 +1,35 @@
+A [green]message[white] that has a [bold]fancy[/bold] hover!
+    hover: ~~~Fancy hover~~~
+
+A §amessage§f that has a §lfancy§r hover!
+
+[
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "A "
+      },
+      {
+        "text": "message",
+        "color": "green"
+      },
+      {
+        "text": " that has a "
+      },
+      {
+        "text": "fancy",
+        "bold": true
+      },
+      {
+        "text": " hover!"
+      }
+    ],
+    "hoverEvent": {
+      "action": "show_text",
+      "value": {
+        "text": "~~~Fancy hover~~~"
+      }
+    }
+  }
+]
