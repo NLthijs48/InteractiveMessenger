@@ -1,0 +1,64 @@
+one
+hover: one
+, two
+ hover: two
+, three
+  hover: three
+, four
+    hover: four
+, five
+     hover: five
+, six
+      hover: six
+
+one, two, three, four, five, six
+
+[
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "one",
+        "hoverEvent": {
+          "action": "show_text",
+          "value": "one"
+        }
+      },
+      {
+        "text": ", two",
+        "hoverEvent": {
+          "action": "show_text",
+          "value": "two"
+        }
+      },
+      {
+        "text": ", three",
+        "hoverEvent": {
+          "action": "show_text",
+          "value": "three"
+        }
+      },
+      {
+        "text": ", four",
+        "hoverEvent": {
+          "action": "show_text",
+          "value": "four"
+        }
+      },
+      {
+        "text": ", five",
+        "hoverEvent": {
+          "action": "show_text",
+          "value": "five"
+        }
+      },
+      {
+        "text": ", six",
+        "hoverEvent": {
+          "action": "show_text",
+          "value": "six"
+        }
+      }
+    ]
+  }
+]

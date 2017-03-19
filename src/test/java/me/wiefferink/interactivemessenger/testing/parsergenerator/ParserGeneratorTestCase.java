@@ -14,8 +14,8 @@ import me.wiefferink.interactivemessenger.testing.RunTests;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 
-import java.io.*;
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 public class ParserGeneratorTestCase extends TestCase {
@@ -41,70 +41,30 @@ public class ParserGeneratorTestCase extends TestCase {
 		Log.info("│ Test:", RunTests.getName(file));
 		Log.info("└───────────────────────────────────────────────────────────────────────────────");
 
-		// Read input and output from the file
-		List<String> input = new ArrayList<>();
-		StringBuilder expectedTellrawOutputBuilder = null;
-		StringBuilder expectedConsoleOutputBuilder = null;
-		boolean canIncrement = false;
-		int state = 0; // 0: reading input,
-		try(BufferedReader fileReader = new BufferedReader(new InputStreamReader(new FileInputStream(file)))) {
-			String line;
-			while((line = fileReader.readLine()) != null) {
-				// (part of) empty line barrier
-				if(line.isEmpty()) {
-					if(canIncrement) {
-						state++;
-						canIncrement = false;
-					}
-					continue;
-				}
 
-				canIncrement = true;
-				// Input line
-				if(state == 0) {
-					input.add(line);
-				}
-				// Expected tellraw output line
-				else if(state == 1) {
-					if(expectedConsoleOutputBuilder == null) {
-						expectedConsoleOutputBuilder = new StringBuilder();
-					} else {
-						expectedConsoleOutputBuilder.append("\n");
-					}
-					expectedConsoleOutputBuilder.append(line);
-				}
-				// Expected console output line
-				else if(state == 2) {
-					if(expectedTellrawOutputBuilder == null) {
-						expectedTellrawOutputBuilder = new StringBuilder();
-					} else {
-						expectedTellrawOutputBuilder.append("\n");
-					}
-					expectedTellrawOutputBuilder.append(line);
-				}
-			}
+		ParserGeneratorTestInput data;
+		try {
+			data = ParserGeneratorTestInput.from(file);
 		} catch(IOException e) {
 			error("Failed to read file: "+ExceptionUtils.getStackTrace(e));
+			return;
 		}
 
-		String expectedConsoleOutput = expectedConsoleOutputBuilder == null ? "" : expectedConsoleOutputBuilder.toString();
-		String expectedTellrawOutput = expectedTellrawOutputBuilder == null ? "" : expectedTellrawOutputBuilder.toString();
-
 		// Check if the input is defined (don't check output to make it easy to add tests, assertEquals will fail anyway)
-		if(input.isEmpty()) {
+		if(data.input.isEmpty()) {
 			error("Input is not defined");
 			return;
 		}
 
 		Log.info("  Input:");
-		Log.printIndented(2, input);
+		Log.printIndented(2, data.input);
 		Log.info("  Expected ConsoleGenerator output:");
-		Log.printIndented(2, expectedConsoleOutput);
+		Log.printIndented(2, data.expectedConsoleOutput);
 		Log.info("  Expected TellrawGenerator output:");
-		Log.printIndented(2, expectedTellrawOutput);
+		Log.printIndented(2, data.expectedTellrawOutput);
 
 		// Parse into InteractiveMessage
-		InteractiveMessage parsedMessage = YamlParser.parse(input);
+		InteractiveMessage parsedMessage = YamlParser.parse(data.input);
 		Log.info("  Parsed InteractiveMessage:", parsedMessage);
 
 		// Generate result of ConsoleGenerator
@@ -130,14 +90,14 @@ public class ParserGeneratorTestCase extends TestCase {
 		// Parse expected output into Json
 		JsonElement expectedTellrawOutputJson;
 		try {
-			expectedTellrawOutputJson = gson.fromJson(expectedTellrawOutput, JsonElement.class);
+			expectedTellrawOutputJson = gson.fromJson(data.expectedTellrawOutput, JsonElement.class);
 		} catch(JsonSyntaxException e) {
 			error("Expected output is invalid Json:", ExceptionUtils.getStackTrace(e));
 			return;
 		}
 
 		// Test if equal
-		assertEquals(expectedConsoleOutput, actualConsoleOutput);
+		assertEquals(data.expectedConsoleOutput, actualConsoleOutput);
 		assertEquals(gson.toJson(expectedTellrawOutputJson), gson.toJson(actualTellrawOutputJson));
 	}
 

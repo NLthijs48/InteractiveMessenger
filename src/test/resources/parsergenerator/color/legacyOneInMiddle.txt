@@ -1,0 +1,16 @@
+Message with &aa part in green
+
+Message with §aa part in green
+
+[
+  {
+    "text": "",
+    "extra": [
+      "Message with ",
+      {
+        "text": "a part in green",
+        "color": "green"
+      }
+    ]
+  }
+]

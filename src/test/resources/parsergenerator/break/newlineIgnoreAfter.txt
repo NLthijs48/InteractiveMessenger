@@ -1,0 +1,19 @@
+first line\n\nasdf
+second line\nother text that is discarded
+third line
+
+first line
+second line
+third line
+
+[
+  [
+    "first line"
+  ],
+  [
+    "second line"
+  ],
+  [
+    "third line"
+  ]
+]

@@ -1,9 +1,0 @@
-A simple message
-
-A simple message
-
-[
-  {
-    "text": "A simple message"
-  }
-]

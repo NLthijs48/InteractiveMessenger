@@ -1,0 +1,14 @@
+name: InteractiveMessengerTest
+main: me.wiefferink.interactivemessenger.testing.ingame.IngameTest
+version: "${project.version}"
+description: "Ingame testing of the InteractiveMessenger project."
+author: NLThijs48 and Phoenix
+permissions:
+  interactivemessenger.test:
+    description: Use the /testInteractiveMessenger command to test it ingame
+    default: op
+commands:
+  testInteractiveMessenger:
+    usage: /testinteractivemessenger
+    description: Test the interactive messenger library
+    aliases: [tim]

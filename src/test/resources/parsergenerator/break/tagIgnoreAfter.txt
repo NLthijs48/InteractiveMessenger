@@ -1,0 +1,19 @@
+first line[break][break]asdf
+second line[break]other text that is discarded
+third line
+
+first line
+second line
+third line
+
+[
+  [
+    "first line"
+  ],
+  [
+    "second line"
+  ],
+  [
+    "third line"
+  ]
+]

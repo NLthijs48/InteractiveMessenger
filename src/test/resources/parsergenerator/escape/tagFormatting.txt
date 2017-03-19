@@ -1,0 +1,16 @@
+\[bold]not \[b]bold
+\[underline]not \[u]colored
+still \[obfuscate]whi\[o]te
+
+[bold]not [b]bold[underline]not [u]coloredstill [obfuscate]whi[o]te
+
+[
+  {
+    "text": "",
+    "extra": [
+      "[bold]not [b]bold",
+      "[underline]not [u]colored",
+      "still [obfuscate]whi[o]te"
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+\&lnot bold
+\&unot underlined
+still \&knot crazy
+
+&lnot bold&unot underlinedstill &knot crazy
+
+[
+  {
+    "text": "",
+    "extra": [
+      "\u0026lnot bold",
+      "\u0026unot underlined",
+      "still \u0026knot crazy"
+    ]
+  }
+]

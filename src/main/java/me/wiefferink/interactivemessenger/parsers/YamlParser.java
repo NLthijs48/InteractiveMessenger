@@ -98,8 +98,8 @@ public class YamlParser {
 	public static InteractiveMessage parse(List<String> input, boolean doInteractives) {
 		InteractiveMessage message = new InteractiveMessage();
 
-		Color currentColor = null;
-		Set<Format> currentFormatting = new HashSet<>();
+		Color currentColor = Color.WHITE;
+		Set<Format> currentFormatting = EnumSet.noneOf(Format.class);
 
 		lineLoop:
 		for(String line : input) {
@@ -121,15 +121,15 @@ public class YamlParser {
 				messagePart = message.getLast();
 				Object tag = interactiveTag.tag;
 				if(tag instanceof Click) {
-					messagePart.onClick = (Click)interactiveTag.tag;
-					messagePart.clickContent = interactiveTag.subsequentContent;
+					messagePart.onClick((Click)interactiveTag.tag);
+					messagePart.onClickContent(interactiveTag.subsequentContent);
 				} else if(tag instanceof Hover) {
 					line = interactiveTag.subsequentContent;
 					isHoverLine = true;
-					if(messagePart.onHover != tag) {
-						// Hover type changed
-						messagePart.hoverContent = new LinkedList<>();
-						messagePart.onHover = (Hover)tag;
+					// Hover type changed, reset content
+					if(messagePart.getOnHover() != tag) {
+						messagePart.getOnHoverContent().clear();
+						messagePart.onHover((Hover)tag);
 					}
 					// Add hover content below
 				}
@@ -142,13 +142,13 @@ public class YamlParser {
 				LinkedList<TextMessagePart> targetList = messagePart;
 				if(isHoverLine) {
 					// Reset - use own
-					currentLineColor = null;
-					currentLineFormatting = new HashSet<>();
-					targetList = messagePart.hoverContent;
+					currentLineColor = Color.WHITE;
+					currentLineFormatting = EnumSet.noneOf(Format.class);
+					targetList = messagePart.getOnHoverContent();
 
 					// Add line break after previous hover line
 					if(!targetList.isEmpty()) {
-						targetList.getLast().text += '\n';
+						targetList.getLast().appendText("\n");
 					}
 				}
 
@@ -168,10 +168,10 @@ public class YamlParser {
 
 					// Add a text part with the correct formatting
 					if(!textToAdd.isEmpty()) {
-						TextMessagePart part = new TextMessagePart();
-						part.text = unescape(textToAdd);
-						part.formatting = new HashSet<>(currentLineFormatting);
-						part.color = currentLineColor;
+						TextMessagePart part = new TextMessagePart()
+								.text(unescape(textToAdd))
+								.format(currentLineFormatting)
+								.color(currentLineColor);
 						targetList.add(part);
 					}
 
@@ -189,9 +189,9 @@ public class YamlParser {
 							}
 						} else if(tag == Control.BREAK) {
 							if(isHoverLine && !targetList.isEmpty()) {
-								targetList.getLast().text += "\n";
+								targetList.getLast().appendText("\n");
 							} else {
-								messagePart.newline = true;
+								messagePart.newline();
 								currentLineFormatting.clear();
                                 // TODO: Remove this and support multiple line breaks and even content after a break?
                                 continue lineLoop;
@@ -214,7 +214,7 @@ public class YamlParser {
 		Iterator<InteractiveMessagePart> it = message.iterator();
 		while(it.hasNext()) {
 			InteractiveMessagePart check = it.next();
-			if(check.size() == 0 && !check.newline) {
+			if(check.size() == 0 && !check.hasNewline()) {
 				it.remove();
 			}
 		}

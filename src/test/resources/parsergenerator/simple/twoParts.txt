@@ -1,0 +1,14 @@
+A simple message
+split into two parts
+
+A simple messagesplit into two parts
+
+[
+  {
+    "text": "",
+    "extra": [
+      "A simple message",
+      "split into two parts"
+    ]
+  }
+]

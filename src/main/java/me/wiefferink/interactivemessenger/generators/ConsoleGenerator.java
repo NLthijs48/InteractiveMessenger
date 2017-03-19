@@ -46,7 +46,6 @@ public class ConsoleGenerator {
 		put(Format.OBFUSCATE, 'k');
 	}};
 
-
 	/**
 	 * Parses the given message to a String containing control characters
 	 * for formatting that can be used for console outputs, but also for normal player
@@ -64,26 +63,21 @@ public class ConsoleGenerator {
 		for(InteractiveMessagePart interactivePart : message) {
 			for(TextMessagePart textPart : interactivePart) {
 				// Use reset if there is formatting active we need to get rid of
-				if(!textPart.formatting.containsAll(activeFormatting)) {
+				if(!textPart.getFormatting().containsAll(activeFormatting)) {
 					result.append(ChatColor.RESET);
 					activeColor = Color.WHITE;
 					activeFormatting.clear();
 				}
-				// If there is no incoming color and it is not already white set it to white
-				else if(textPart.color == null && activeColor != Color.WHITE) {
-					result.append(ChatColor.WHITE);
-					activeColor = Color.WHITE;
-				}
 
 				// Color
-				if(textPart.color != null && activeColor != textPart.color) {
-					result.append(ChatColor.COLOR_CHAR).append(colorCode.get(textPart.color));
-					activeColor = textPart.color;
+				if(activeColor != textPart.getColor()) {
+					result.append(ChatColor.COLOR_CHAR).append(colorCode.get(textPart.getColor()));
+					activeColor = textPart.getColor();
 				}
 
 				// Formatting
 				Set<Format> formattingToAdd = EnumSet.noneOf(Format.class);
-				formattingToAdd.addAll(textPart.formatting);
+				formattingToAdd.addAll(textPart.getFormatting());
 				formattingToAdd.removeAll(activeFormatting);
 				for(Format format : formattingToAdd) {
 					result.append(ChatColor.COLOR_CHAR).append(formatCode.get(format));
@@ -91,12 +85,12 @@ public class ConsoleGenerator {
 				}
 
 				// Text
-				result.append(textPart.text);
+				result.append(textPart.getText());
 			}
 
             // Add newlines
-            if (interactivePart.newline) {
-                result.append("\n");
+			if(interactivePart.hasNewline()) {
+				result.append("\n");
             }
         }
 		return result.toString();

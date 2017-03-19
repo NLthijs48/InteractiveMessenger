@@ -1,0 +1,16 @@
+\&2not black
+\&5not colored
+still \&8white
+
+&2not black&5not coloredstill &8white
+
+[
+  {
+    "text": "",
+    "extra": [
+      "\u00262not black",
+      "\u00265not colored",
+      "still \u00268white"
+    ]
+  }
+]

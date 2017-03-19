@@ -101,8 +101,6 @@ public class LanguageManager implements MessageProvider {
 						while((read = input.read(bytes)) != -1) {
 							output.write(bytes, 0, read);
 						}
-						input.close();
-						output.close();
 					} catch(IOException e) {
 						Message.warn("Something went wrong saving a default language file: "+targetFile.getAbsolutePath());
 					}

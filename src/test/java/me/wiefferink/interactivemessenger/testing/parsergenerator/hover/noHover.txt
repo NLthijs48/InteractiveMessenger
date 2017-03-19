@@ -1,9 +1,0 @@
-To add tooltips use this: `hover: ~~~Fancy hover~~~`
-
-To add tooltips use this: `hover: ~~~Fancy hover~~~`
-
-[
-  {
-    "text": "To add tooltips use this: `hover: ~~~Fancy hover~~~`"
-  }
-]

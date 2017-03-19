@@ -41,6 +41,40 @@ public class TellrawGenerator {
 		put(Hover.HOVER, "show_text");
 	}};
 
+	/* Thoughts about printing JSON that is as small as possible
+	 *
+	 * Message structure:
+	 *   InteractiveMessage:
+	 *     line (groups of InteractiveMessageParts without newlines, except possibly at the end)
+	 *       InteractiveMessageParts:
+	 *         TextMessagePart
+	 *         more...
+	 *       more...
+	 *     more...
+	 *
+	 * What to do:
+	 *   InteractiveMessage:
+	 *     - create list to hold the lines
+	 *     - print the lines to this list
+	 *   line:
+	 *     - single InteractiveMessagePart: print the part
+	 *     - multiple InteractiveMessageParts: print an array with the parts
+	 *   InteractiveMessagePart:
+	 *     - single TextMessagePart: print the part
+	 *     - multiple TextMessageParts: print an array with the parts
+	 *     - with hover/click wrap like this: {text: "", extra: <TextMessageParts>, hoverEvent: <>, clickEvent: <>}
+	 *   TextMessagePart:
+	 *     - without formatting: "<text>"
+	 *     - with formatting: {text: <text>, bold: <boolean>, color: <color>, ...}
+	 *
+	 * Take into account:
+	 *   - when a line has a single InteractiveMessagePart, without hover/click, which has a single TextMessagePart
+	 *     without formatting it will be printed as simple string and needs to be wrapped in an array
+	 *     (/tellraw "hi" does not work)
+	 *   - If there is only one TextMessagePart it might be cobined with his InteractiveMessagePart parent
+	 *     (this is challenging in practice though)
+	 *
+	 */
 
 	/**
 	 * Parses the given message to a JSON array that can be
@@ -49,32 +83,39 @@ public class TellrawGenerator {
 	 * @return JSON string that can be send to a player (multiple means line breaks have been used)
 	 */
 	public static List<String> generate(InteractiveMessage message) {
-		message = message.copy(); // Don't destroy the message
+		message = message.copy();
+		// Resulting JSON strings, each one should be printed on a new line (separate /tellraw command to provide 1.7 compatibility)
 		List<String> result = new ArrayList<>();
 
-		List<InteractiveMessagePart> combine = new ArrayList<>(); // Part that are combined to a line
+		// Combine InteractiveMessageParts without newlines into a group
+		List<InteractiveMessagePart> combine = new ArrayList<>();
 		while(!message.isEmpty()) {
 			InteractiveMessagePart part = message.removeFirst();
-			combine.add(part);
-			if(part.newline || message.isEmpty()) {
+			// Skip empty newline parts
+			if(!(part.hasNewline() && part.isEmpty())) {
+				combine.add(part);
+			}
+			// If we need to go to the next line or we got all the parts, print it
+			if(part.hasNewline() || message.isEmpty()) {
+				String lineResult = "\"\"";
 				if(combine.size() == 1) {
-					StringBuilder nextLine = new StringBuilder();
-					toJSON(combine.get(0), nextLine);
-					result.add(nextLine.toString());
+					lineResult = toJSON(combine.get(0), new StringBuilder()).toString();
 				} else if(combine.size() > 1) {
 					StringBuilder nextLine = new StringBuilder("{\"text\":\"\",\"extra\":[");
 					for(int i = 0; i < combine.size(); i++) {
-						// Skip possibly last empty InteractiveMessagePart which has newline set
-						if(!combine.get(i).isEmpty()) {
-							if(i != 0) {
-								nextLine.append(",");
-							}
-							toJSON(combine.get(i), nextLine);
+						if(i != 0) {
+							nextLine.append(",");
 						}
+						toJSON(combine.get(i), nextLine);
 					}
 					nextLine.append("]}");
-					result.add(nextLine.toString());
+					lineResult = nextLine.toString();
 				}
+				// Handle bare string case (wrap in array)
+				if(lineResult.charAt(0) == '"' && lineResult.charAt(lineResult.length()-1) == '"') {
+					lineResult = '['+lineResult+']';
+				}
+				result.add(lineResult);
 				combine.clear();
 			}
 		}
@@ -84,91 +125,122 @@ public class TellrawGenerator {
 
 	/**
 	 * Get a JSON component for this message part
+	 * @param part The InteractiveMessagePart to be printed
 	 * @param sb The StringBuilder to append the result to
 	 * @return The StringBuilder where the JSON has been appended to
 	 */
 	private static StringBuilder toJSON(InteractiveMessagePart part, StringBuilder sb) {
 		// Error case, should never happen, print something as safeguard
 		if(part.size() == 0) {
-			sb.append("{\"text\":\"\"}");
+			sb.append("\"\"");
 			return sb;
 		}
 
+		// Only wrap if there are interactive parts to be added
+		String finalCloser = "";
+		String arrayCloser = "";
+		boolean isInExtra = false;
+		if(part.isInteractive() || part.size() > 1) {
+			sb.append("{\"text\":");
+			finalCloser = "}";
+			isInExtra = true;
+		}
+
+		// Add TextMessageParts
 		if(part.size() == 1) {
-			// Add attributes to TextMessagePart object
+			if(part.getFirst().hasFormatting()) {
+				if(isInExtra) {
+					sb.append("\"\",\"extra\":");
+				}
+			}
 			toJSON(part.getFirst(), sb);
-			sb.deleteCharAt(sb.length()-1);
 		} else {
-			sb.append('{');
-			sb.append("\"text\":\"\",\"extra\":[");
+			if(!isInExtra) {
+				sb.append("{\"text\":");
+			}
+			sb.append("\"\",\"extra\":[");
 			for(TextMessagePart textPart : part) {
 				toJSON(textPart, sb);
 				sb.append(',');
 			}
-			sb.deleteCharAt(sb.length()-1);
-			sb.append(']');
+			sb.deleteCharAt(sb.length()-1); // Remove trailing comma
+			sb.append("]");
+			if(!isInExtra) {
+				sb.append("}");
+			}
 		}
+		sb.append(arrayCloser);
 
 		// Add click action
-		if(part.onClick != null) {
+		if(part.getOnClick() != null) {
 			sb.append(',');
 			sb.append("\"clickEvent\":{");
-			sb.append("\"action\":\"").append(clickJsonKey.get(part.onClick)).append("\",");
+			sb.append("\"action\":\"");
+			sb.append(clickJsonKey.get(part.getOnClick()));
+			sb.append("\",");
 			sb.append("\"value\":");
-			printJsonString(part.clickContent, sb);
+			printJsonString(part.getOnClickContent(), sb);
 			sb.append('}');
 		}
 
 		// Add hover action
-		if(part.onHover != null) {
+		if(part.getOnHover() != null && !part.getOnHoverContent().isEmpty()) {
 			sb.append(',');
 			sb.append("\"hoverEvent\":{");
-			sb.append("\"action\":\"").append(hoverJsonKey.get(part.onHover)).append("\",");
+			sb.append("\"action\":\"");
+			sb.append(hoverJsonKey.get(part.getOnHover()));
+			sb.append("\",");
 			sb.append("\"value\":");
-			if(part.hoverContent.size() == 1) {
-				TextMessagePart hoverPart = part.hoverContent.getFirst();
-				if(hoverPart.hasFormatting()) {
-					toJSON(hoverPart, sb);
-				} else {
-					printJsonString(hoverPart.text, sb);
-				}
+			if(part.getOnHoverContent().size() == 1) {
+				toJSON(part.getOnHoverContent().getFirst(), sb);
 			} else {
-				sb.append('[');
-				for(TextMessagePart hoverPart : part.hoverContent) {
+				sb.append("{\"text\":\"\",\"extra\":[");
+				for(TextMessagePart hoverPart : part.getOnHoverContent()) {
 					toJSON(hoverPart, sb);
 					sb.append(',');
 				}
-				sb.deleteCharAt(sb.length()-1);
-				sb.append(']');
+				sb.deleteCharAt(sb.length()-1); // Remove trailing comma
+				sb.append("]}");
 			}
 			sb.append('}');
 		}
-		sb.append('}');
+
+		sb.append(finalCloser);
 		return sb;
 	}
 
 	/**
 	 * Get a JSON component for this message part
+	 * @param part The TextMessagePart to print
 	 * @param sb The StringBuilder to append the JSON result to
 	 * @return The StringBuilder where the result has been appended to
 	 */
 	private static StringBuilder toJSON(TextMessagePart part, StringBuilder sb) {
+		// Simple string
+		if(!part.hasFormatting()) {
+			printJsonString(part.getText(), sb);
+			return sb;
+		}
+
+		// String with formatting
 		sb.append('{');
 
 		// Text
 		sb.append("\"text\":");
-		printJsonString(part.text, sb);
+		printJsonString(part.getText(), sb);
 
 		// Color
-		if(part.color != null && part.color != Color.WHITE) {
-			sb.append(",\"color\":\"").append(part.color.name().toLowerCase()).append("\"");
+		if(part.getColor() != Color.WHITE) {
+			sb.append(",\"color\":\"");
+			sb.append(part.getColor().name().toLowerCase());
+			sb.append("\"");
 		}
 
 		// Formatting
-		for(Format formatting : part.formatting) {
+		for(Format formatting : part.getFormatting()) {
 			sb.append(",\"");
-			sb.append(formatJsonKey.get(formatting)).append("\":");
-			sb.append("true");
+			sb.append(formatJsonKey.get(formatting));
+			sb.append("\":true");
 		}
 
 		sb.append('}');

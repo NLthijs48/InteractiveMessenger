@@ -1,9 +1,0 @@
-message without \[break], yes \\nreally!
-
-message without [break], yes \nreally!
-
-[
-  {
-    "text": "message without [break], yes \\nreally!"
-  }
-]

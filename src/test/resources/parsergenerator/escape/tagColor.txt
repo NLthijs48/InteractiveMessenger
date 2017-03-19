@@ -1,0 +1,16 @@
+\[black]not black
+\[green]not colored
+still \[blue]white
+
+[black]not black[green]not coloredstill [blue]white
+
+[
+  {
+    "text": "",
+    "extra": [
+      "[black]not black",
+      "[green]not colored",
+      "still [blue]white"
+    ]
+  }
+]

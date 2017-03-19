@@ -1,0 +1,9 @@
+message without \[break], yes \\nreally!
+
+message without [break], yes \nreally!
+
+[
+  [
+    "message without [break], yes \\nreally!"
+  ]
+]

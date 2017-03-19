@@ -1,0 +1,137 @@
+[black]black,
+[dark_blue]dark_blue,
+[dark_green]dark_green,
+[dark_aqua]dark_aqua,
+[dark_red]dark_red,
+[dark_purple]dark_purple,
+[gold]gold,
+[gray]gray,
+[dark_gray]dark_gray,
+[blue]blue,
+[green]green,
+[aqua]aqua,
+[red]red,
+[light_purple]light_purple,
+[yellow]yellow,
+[white]white
+[darkblue]darkblue,
+[darkgray]darkgray,
+[darkgreen]darkgreen,
+[darkaqua]darkaqua,
+[dark_grey]dark_grey,
+[darkred]darkred,
+[darkgrey]darkgrey,
+[darkpurple]darkpurple,
+[grey]grey,
+[lightpurple]lightpurple,
+
+§0black,§1dark_blue,§2dark_green,§3dark_aqua,§4dark_red,§5dark_purple,§6gold,§7gray,§8dark_gray,§9blue,§agreen,§baqua,§cred,§dlight_purple,§eyellow,§fwhite§1darkblue,§8darkgray,§2darkgreen,§3darkaqua,§8dark_grey,§4darkred,§8darkgrey,§5darkpurple,§7grey,§dlightpurple,
+
+[
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "black,",
+        "color": "black"
+      },
+      {
+        "text": "dark_blue,",
+        "color": "dark_blue"
+      },
+      {
+        "text": "dark_green,",
+        "color": "dark_green"
+      },
+      {
+        "text": "dark_aqua,",
+        "color": "dark_aqua"
+      },
+      {
+        "text": "dark_red,",
+        "color": "dark_red"
+      },
+      {
+        "text": "dark_purple,",
+        "color": "dark_purple"
+      },
+      {
+        "text": "gold,",
+        "color": "gold"
+      },
+      {
+        "text": "gray,",
+        "color": "gray"
+      },
+      {
+        "text": "dark_gray,",
+        "color": "dark_gray"
+      },
+      {
+        "text": "blue,",
+        "color": "blue"
+      },
+      {
+        "text": "green,",
+        "color": "green"
+      },
+      {
+        "text": "aqua,",
+        "color": "aqua"
+      },
+      {
+        "text": "red,",
+        "color": "red"
+      },
+      {
+        "text": "light_purple,",
+        "color": "light_purple"
+      },
+      {
+        "text": "yellow,",
+        "color": "yellow"
+      },
+      "white",
+      {
+        "text": "darkblue,",
+        "color": "dark_blue"
+      },
+      {
+        "text": "darkgray,",
+        "color": "dark_gray"
+      },
+      {
+        "text": "darkgreen,",
+        "color": "dark_green"
+      },
+      {
+        "text": "darkaqua,",
+        "color": "dark_aqua"
+      },
+      {
+        "text": "dark_grey,",
+        "color": "dark_gray"
+      },
+      {
+        "text": "darkred,",
+        "color": "dark_red"
+      },
+      {
+        "text": "darkgrey,",
+        "color": "dark_gray"
+      },
+      {
+        "text": "darkpurple,",
+        "color": "dark_purple"
+      },
+      {
+        "text": "grey,",
+        "color": "gray"
+      },
+      {
+        "text": "lightpurple,",
+        "color": "light_purple"
+      }
+    ]
+  }
+]

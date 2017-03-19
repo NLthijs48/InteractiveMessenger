@@ -10,7 +10,7 @@ import java.util.Arrays;
 
 public class RunTests {
 
-	public static final File testDirectory = new File(StringUtils.join(Arrays.asList("src", "test", "java", "me", "wiefferink", "interactivemessenger", "testing"), File.separator));
+	public static final File testDirectory = new File(StringUtils.join(Arrays.asList("src", "test", "resources"), File.separator));
 	public static final File parserGenerator = new File(testDirectory.getAbsolutePath()+File.separator+"parsergenerator");
 
 	public static Test suite() {

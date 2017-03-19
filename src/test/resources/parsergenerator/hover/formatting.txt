@@ -1,0 +1,31 @@
+A message that has a fancy hover!
+    hover: [red]~~~[bold]Fancy hover[/bold]~~~
+
+A message that has a fancy hover!
+
+[
+  {
+    "text": "A message that has a fancy hover!",
+    "hoverEvent": {
+      "action": "show_text",
+      "value": {
+        "text": "",
+        "extra": [
+          {
+            "text": "~~~",
+            "color": "red"
+          },
+          {
+            "text": "Fancy hover",
+            "color": "red",
+            "bold": true
+          },
+          {
+            "text": "~~~",
+            "color": "red"
+          }
+        ]
+      }
+    }
+  }
+]

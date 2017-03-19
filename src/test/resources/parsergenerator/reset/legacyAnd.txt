@@ -1,0 +1,65 @@
+clean
+[red]red, [bold]red+bold, &rclean
+[blue]blue, [green]green, [underline]green+underline, [darkblue]darkblue+underline, &rclean
+&rclean, [red]red, &r&r&rstill clean
+
+clean§cred, §lred+bold, §rclean§9blue, §agreen, §ngreen+underline, §1darkblue+underline, §rcleanclean, §cred, §fstill clean
+
+[
+  {
+    "text": "",
+    "extra": [
+      "clean",
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "red, ",
+            "color": "red"
+          },
+          {
+            "text": "red+bold, ",
+            "color": "red",
+            "bold": true
+          },
+          "clean"
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "blue, ",
+            "color": "blue"
+          },
+          {
+            "text": "green, ",
+            "color": "green"
+          },
+          {
+            "text": "green+underline, ",
+            "color": "green",
+            "underlined": true
+          },
+          {
+            "text": "darkblue+underline, ",
+            "color": "dark_blue",
+            "underlined": true
+          },
+          "clean"
+        ]
+      },
+      {
+        "text": "",
+        "extra": [
+          "clean, ",
+          {
+            "text": "red, ",
+            "color": "red"
+          },
+          "still clean"
+        ]
+      }
+    ]
+  }
+]

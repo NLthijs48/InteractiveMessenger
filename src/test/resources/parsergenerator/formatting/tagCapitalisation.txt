@@ -1,0 +1,31 @@
+[Bold]a part in bold [/BOLd] not in bold [B]bold, [/B]not bold
+[UNDERliNe]underlined piece
+
+§la part in bold §r not in bold §lbold, §rnot bold§nunderlined piece
+
+[
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "",
+        "extra": [
+          {
+            "text": "a part in bold ",
+            "bold": true
+          },
+          " not in bold ",
+          {
+            "text": "bold, ",
+            "bold": true
+          },
+          "not bold"
+        ]
+      },
+      {
+        "text": "underlined piece",
+        "underlined": true
+      }
+    ]
+  }
+]

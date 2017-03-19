@@ -1,0 +1,136 @@
+[bold]bold[/bold], not bold\n
+[b], b[/b], not b\n
+[strikethrough]strikethrough[/strikethrough], not strikethrough\n
+[strike], strike, [/strike], not strike\n
+[s]s, [/s], not s\n
+[underline]underline[/underline], not underline\n
+[u], u, [/u], not u\n
+[italic]italic[/italic], not italic\n
+[i], i, [/i], not i\n
+[obfuscate]obfuscated[/obfuscate], not obfuscated\n
+[o], o, [/o], not o
+
+§lbold§r, not bold
+§l, b§r, not b
+§sstrikethrough§r, not strikethrough
+§s, strike, §r, not strike
+§ss, §r, not s
+§nunderline§r, not underline
+§n, u, §r, not u
+§oitalic§r, not italic
+§o, i, §r, not i
+§kobfuscated§r, not obfuscated
+§k, o, §r, not o
+
+[
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "bold",
+        "bold": true
+      },
+      ", not bold"
+    ]
+  },
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": ", b",
+        "bold": true
+      },
+      ", not b"
+    ]
+  },
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "strikethrough",
+        "strikethrough": true
+      },
+      ", not strikethrough"
+    ]
+  },
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": ", strike, ",
+        "strikethrough": true
+      },
+      ", not strike"
+    ]
+  },
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "s, ",
+        "strikethrough": true
+      },
+      ", not s"
+    ]
+  },
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "underline",
+        "underlined": true
+      },
+      ", not underline"
+    ]
+  },
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": ", u, ",
+        "underlined": true
+      },
+      ", not u"
+    ]
+  },
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "italic",
+        "italic": true
+      },
+      ", not italic"
+    ]
+  },
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": ", i, ",
+        "italic": true
+      },
+      ", not i"
+    ]
+  },
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": "obfuscated",
+        "obfuscated": true
+      },
+      ", not obfuscated"
+    ]
+  },
+  {
+    "text": "",
+    "extra": [
+      {
+        "text": ", o, ",
+        "obfuscated": true
+      },
+      ", not o"
+    ]
+  }
+]

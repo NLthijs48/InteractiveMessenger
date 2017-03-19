@@ -362,10 +362,11 @@ public class Message {
 			if(target instanceof CommandSender) {
 				((CommandSender)target).sendMessage(plainMessage);
 			} else if(target instanceof Logger) {
-				((Logger)target).info(plainMessage);
+				((Logger)target).info(ChatColor.stripColor(plainMessage));
 			} else if(target instanceof BufferedWriter) {
 				try {
-					((BufferedWriter)target).write(plainMessage);
+					((BufferedWriter)target).write(ChatColor.stripColor(plainMessage));
+					((BufferedWriter)target).newLine();
 				} catch(IOException e) {
 					warn("Exception while writing to BufferedWriter:", ExceptionUtils.getStackTrace(e));
 				}
