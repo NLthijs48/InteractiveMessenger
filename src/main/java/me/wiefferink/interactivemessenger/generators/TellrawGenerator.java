@@ -148,12 +148,13 @@ public class TellrawGenerator {
 
 		// Add TextMessageParts
 		if(part.size() == 1) {
-			if(part.getFirst().hasFormatting()) {
-				if(isInExtra) {
-					sb.append("\"\",\"extra\":");
-				}
+			if(part.getFirst().hasFormatting() && isInExtra) {
+				sb.append("\"\",\"extra\":[");
 			}
 			toJSON(part.getFirst(), sb);
+			if(part.getFirst().hasFormatting() && isInExtra) {
+				sb.append("]");
+			}
 		} else {
 			if(!isInExtra) {
 				sb.append("{\"text\":");
