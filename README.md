@@ -1,4 +1,4 @@
-InteractiveMessaging
+InteractiveMessenger
 ====================
 
 A format for text in config files to make use of the fancy Minecraft chat features like click, hover, suggest, etc.
@@ -32,6 +32,36 @@ A format for text in config files to make use of the fancy Minecraft chat featur
         <version>1.0</version>
       </dependency>
     </dependencies>
+    ```
+1. Relocate the library (compatibility with other plugins):
+
+    ```xml
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.3</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <relocations>
+                                <!-- Relocate InteractiveMessenger -->
+                                <relocation>
+                                    <pattern>me.wiefferink.interactivemessenger</pattern>
+                                    <shadedPattern>your.package.here.shaded.interactivemessenger</shadedPattern>
+                                </relocation>
+                            </relocations>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
     ```
 1. Use the library classes depending on how much of the InteractiveMessenger you want to use.
   * TODO: explain possible levels of integration and how to do them
