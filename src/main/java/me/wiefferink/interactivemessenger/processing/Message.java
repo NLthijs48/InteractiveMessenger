@@ -29,15 +29,15 @@ public class Message {
 	private static MessageProvider messageProvider = null;
 
 	// Define the symbols used for variables
-	public static final String VARIABLESTART = "%";
-	public static final String VARIABLEEND = "%";
-	public static final String LANGUAGEVARIABLE = "lang:";
-	public static final Pattern variablePattern = Pattern.compile(Pattern.quote(VARIABLESTART)+"[a-zA-Z]+?"+Pattern.quote(VARIABLEEND));
-	public static final Pattern variables = Pattern.compile(
-			Pattern.quote(VARIABLESTART)+
-					Pattern.quote(LANGUAGEVARIABLE)+"[a-zA-Z-]+?"+    // Language key
+	public static final String VARIABLE_START = "%";
+	public static final String VARIABLE_END = "%";
+	public static final String LANGUAGE_KEY_PREFIX = "lang:";
+	public static final Pattern VARIABLE_PATTERN = Pattern.compile(Pattern.quote(VARIABLE_START) + "[a-zA-Z]+?" + Pattern.quote(VARIABLE_END));
+	public static final Pattern LANGUAGE_VARIABLE_PATTERN = Pattern.compile(
+			Pattern.quote(VARIABLE_START) +
+					Pattern.quote(LANGUAGE_KEY_PREFIX) + "[a-zA-Z-]+?" +    // Language key
 					"(\\|(.*?\\|)+?)?"+                                // Optional message arguments
-					Pattern.quote(VARIABLEEND)
+					Pattern.quote(VARIABLE_END)
 	);
 
 	private static HashMap<Integer, Pattern> indexPatterns = new HashMap<>();
@@ -50,7 +50,7 @@ public class Message {
 	private static Pattern getIndexPattern(int index) {
 		Pattern result = indexPatterns.get(index);
 		if(result == null) {
-			result = Pattern.compile(Pattern.quote(VARIABLESTART)+index+Pattern.quote(VARIABLEEND));
+			result = Pattern.compile(Pattern.quote(VARIABLE_START) + index + Pattern.quote(VARIABLE_END));
 			indexPatterns.put(index, result);
 		}
 		return result;
@@ -216,7 +216,7 @@ public class Message {
 	 */
 	public Message prefix(boolean doIt) {
 		if(doIt) {
-			message.add(0, VARIABLESTART+LANGUAGEVARIABLE+CHATLANGUAGEVARIABLE+VARIABLEEND);
+			message.add(0, VARIABLE_START + LANGUAGE_KEY_PREFIX + CHATLANGUAGEVARIABLE + VARIABLE_END);
 		}
 		return this;
 	}
@@ -438,10 +438,10 @@ public class Message {
 		limit.depth++;
 
 		//depthPrint(limit, ">>> doReplacements:", message, limit);
-		// Replace variables until they are all gone, or when the limit is reached
+		// Replace LANGUAGE_VARIABLE_PATTERN until they are all gone, or when the limit is reached
 		try {
 			List<String> outerOriginal;
-			// Repeat replacements for if language replacements introduced new variables
+			// Repeat replacements for if language replacements introduced new LANGUAGE_VARIABLE_PATTERN
 			int fullRounds = 0;
 			do {
 				outerOriginal = new ArrayList<>(message);
@@ -488,10 +488,10 @@ public class Message {
 	}
 
 	/**
-	 * Replace argument variables in a message
+	 * Replace argument LANGUAGE_VARIABLE_PATTERN in a message
 	 * The arguments to apply as replacements:
 	 * - If it is a GeneralRegion the replacements of the region will be applied
-	 * - Else the parameter will replace its number surrounded with VARIABLESTART and VARIABLEEND
+	 * - Else the parameter will replace its number surrounded with VARIABLE_START and VARIABLE_END
 	 */
 	private void replaceArgumentVariables(Limit limit) {
 		limit.depth++;
@@ -509,7 +509,7 @@ public class Message {
 				if(param != null) {
 					if(param instanceof ReplacementProvider) {
 						// Find the first non-escaped named variable
-						Matcher matcher = variablePattern.matcher(line);
+						Matcher matcher = VARIABLE_PATTERN.matcher(line);
 						int startAt = 0;
 						while(matcher.find()) {
 							// Check for escaping
@@ -539,7 +539,7 @@ public class Message {
 								message.set(i, result);
 								line = result;
 								int matcherStart = matcher.start();
-								matcher = variablePattern.matcher(line);
+								matcher = VARIABLE_PATTERN.matcher(line);
 								matcher.region(matcherStart+add.length(), line.length());
 							}
 						}
@@ -617,7 +617,7 @@ public class Message {
 	}
 
 	/**
-	 * Replace all language variables in a message
+	 * Replace all language LANGUAGE_VARIABLE_PATTERN in a message
 	 */
 	private void replaceLanguageVariables(Limit limit) {
 		limit.depth++;
@@ -629,7 +629,7 @@ public class Message {
 		}
 
 		for(int i = 0; i < message.size(); i++) {
-			Matcher matcher = variables.matcher(message.get(i));
+			Matcher matcher = LANGUAGE_VARIABLE_PATTERN.matcher(message.get(i));
 			while(matcher.find()) {
 				// Check for escaping
 				int beforeAt = matcher.start()-1;
@@ -644,8 +644,8 @@ public class Message {
 				String key;
 				Object[] arguments = null;
 				if(variable.contains("|")) {
-					key = variable.substring(VARIABLESTART.length()+LANGUAGEVARIABLE.length(), variable.indexOf("|"));
-					String[] stringArguments = variable.substring(variable.indexOf("|")+1, variable.length()-VARIABLEEND.length()).split("\\|");
+					key = variable.substring(VARIABLE_START.length() + LANGUAGE_KEY_PREFIX.length(), variable.indexOf("|"));
+					String[] stringArguments = variable.substring(variable.indexOf("|") + 1, variable.length() - VARIABLE_END.length()).split("\\|");
 					// Wrap arguments in Message object to prevent escaping
 					arguments = new Message[stringArguments.length];
 					for(int argumentIndex = 0; argumentIndex < stringArguments.length; argumentIndex++) {
@@ -653,7 +653,7 @@ public class Message {
 						arguments[argumentIndex] = Message.fromString(stringArguments[argumentIndex]).inline();
 					}
 				} else {
-					key = variable.substring(VARIABLESTART.length()+LANGUAGEVARIABLE.length(), variable.length()-VARIABLEEND.length());
+					key = variable.substring(VARIABLE_START.length() + LANGUAGE_KEY_PREFIX.length(), variable.length() - VARIABLE_END.length());
 				}
 				Message insert = Message.fromKey(key);
 				if(arguments != null) {

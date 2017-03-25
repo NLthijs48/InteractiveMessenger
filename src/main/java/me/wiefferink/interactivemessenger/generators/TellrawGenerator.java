@@ -99,14 +99,14 @@ public class TellrawGenerator {
 			if(part.hasNewline() || message.isEmpty()) {
 				String lineResult = "\"\"";
 				if(combine.size() == 1) {
-					lineResult = toJSON(combine.get(0), new StringBuilder()).toString();
+					lineResult = toJson(combine.get(0), new StringBuilder()).toString();
 				} else if(combine.size() > 1) {
 					StringBuilder nextLine = new StringBuilder("{\"text\":\"\",\"extra\":[");
 					for(int i = 0; i < combine.size(); i++) {
 						if(i != 0) {
 							nextLine.append(",");
 						}
-						toJSON(combine.get(i), nextLine);
+						toJson(combine.get(i), nextLine);
 					}
 					nextLine.append("]}");
 					lineResult = nextLine.toString();
@@ -129,7 +129,7 @@ public class TellrawGenerator {
 	 * @param sb The StringBuilder to append the result to
 	 * @return The StringBuilder where the JSON has been appended to
 	 */
-	private static StringBuilder toJSON(InteractiveMessagePart part, StringBuilder sb) {
+	private static StringBuilder toJson(InteractiveMessagePart part, StringBuilder sb) {
 		// Error case, should never happen, print something as safeguard
 		if(part.size() == 0) {
 			sb.append("\"\"");
@@ -151,7 +151,7 @@ public class TellrawGenerator {
 			if(part.getFirst().hasFormatting() && isInExtra) {
 				sb.append("\"\",\"extra\":[");
 			}
-			toJSON(part.getFirst(), sb);
+			toJson(part.getFirst(), sb);
 			if(part.getFirst().hasFormatting() && isInExtra) {
 				sb.append("]");
 			}
@@ -161,7 +161,7 @@ public class TellrawGenerator {
 			}
 			sb.append("\"\",\"extra\":[");
 			for(TextMessagePart textPart : part) {
-				toJSON(textPart, sb);
+				toJson(textPart, sb);
 				sb.append(',');
 			}
 			sb.deleteCharAt(sb.length()-1); // Remove trailing comma
@@ -193,11 +193,11 @@ public class TellrawGenerator {
 			sb.append("\",");
 			sb.append("\"value\":");
 			if(part.getOnHoverContent().size() == 1) {
-				toJSON(part.getOnHoverContent().getFirst(), sb);
+				toJson(part.getOnHoverContent().getFirst(), sb);
 			} else {
 				sb.append("{\"text\":\"\",\"extra\":[");
 				for(TextMessagePart hoverPart : part.getOnHoverContent()) {
-					toJSON(hoverPart, sb);
+					toJson(hoverPart, sb);
 					sb.append(',');
 				}
 				sb.deleteCharAt(sb.length()-1); // Remove trailing comma
@@ -216,7 +216,7 @@ public class TellrawGenerator {
 	 * @param sb The StringBuilder to append the JSON result to
 	 * @return The StringBuilder where the result has been appended to
 	 */
-	private static StringBuilder toJSON(TextMessagePart part, StringBuilder sb) {
+	private static StringBuilder toJson(TextMessagePart part, StringBuilder sb) {
 		// Simple string
 		if(!part.hasFormatting()) {
 			printJsonString(part.getText(), sb);
