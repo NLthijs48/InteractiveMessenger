@@ -62,15 +62,44 @@ A format for text in config files to make use of the fancy Minecraft chat featur
             </plugin>
         </plugins>
     </build>
+    ```    
+1. Setup a language:
+    1. Create a `languages` folder in `/src/main/resources` of your project.
+    1. Create the first language file in the `languages` folder, for example `EN.yml`.
+    1. Add a message to the language file:
+    
+        ```java
+        message-key: "Hello %0%!"
+        ```
+1. Setup the LanguageManager:
+    
+    At the startup of your plugin (in `onEnable`) create a LanguageManager instance:
+        
+    ```java
+    LanguageManager languageManager = new LanguageManager(
+        this,                                  // The plugin (used to get the languages bundled in the jar file)
+        "languages",                           // Folder where the languages are stored
+        getConfig().getString("language"),     // The language to use indicated by the plugin user
+        "EN",                                  // The default language, expected to be shipped with the plugin and should be complete, fills in gaps in the user-selected language
+        Collections.singletonList("[MyPlugin] ") // Chat prefix to use with Message#prefix(), could of course come from the config file
+    );
     ```
-1. Use the library classes depending on how much of the InteractiveMessenger you want to use.
-  * TODO: explain possible levels of integration and how to do them
-  * TODO: add image showing integration levels
-  
+1. Send a message:
+    
+    ```java
+    Message.fromKey("message-key").replacements(player.getName()).send(player);
+    ```
+1. What happens when starting the plugin?
+    1. The LanguageManager will write all language files to the `languages` folder in the directory of your plugin (this keeps included languages up-to-date, while allowing the user to copy and edit the languages).
+    1. The language selected by the user and default language file are loaded.
+    1. At `Message.fromKey()` the message will get loaded from the user-selected language file (falling back to the default language file).
+    1. `Message.replacements()` indicates that `%0%` should get replaced by the users name.
+    1. `Message.send()` executes the replacements and sends the message to the Player/CommandSender/Logger.
+
 ## Example
 The plugin [AreaShop](https://github.com/NLthijs48/AreaShop) is using this library and can be checked for advanced usage of this library. The following parts of AreaShop use this library:
 
 * **[AreaShop](https://github.com/NLthijs48/AreaShop/blob/master/AreaShop/src/main/java/me/wiefferink/areashop/AreaShop.java).setupLanguageManager()**: setup the library
-* **AreaShop.message** method used to send messages, could also be done by using `Message.from()` directly though.
-* **/lang**: folder with the language files.
+* **[AreaShop](https://github.com/NLthijs48/AreaShop/blob/master/AreaShop/src/main/java/me/wiefferink/areashop/AreaShop.java).message** method used to send messages, could also be done by using `Message.from()` directly.
+* **[/lang](https://github.com/NLthijs48/AreaShop/tree/master/AreaShop/src/main/resources/lang)**: folder with the language files.
 
