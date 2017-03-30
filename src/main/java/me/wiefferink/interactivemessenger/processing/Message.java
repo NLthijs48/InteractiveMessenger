@@ -353,13 +353,13 @@ public class Message {
 			}
 		} else {
 			String plainMessage = ConsoleGenerator.generate(YamlParser.parse(message));
-			// Strip colors if disabled
-			if(!useColorsInConsole) {
-				plainMessage = ChatColor.stripColor(plainMessage);
-			}
 
 			// Send to the target
 			if(target instanceof CommandSender) {
+				// Strip colors if disabled
+				if(!useColorsInConsole) {
+					plainMessage = ChatColor.stripColor(plainMessage);
+				}
 				((CommandSender)target).sendMessage(plainMessage);
 			} else if(target instanceof Logger) {
 				((Logger)target).info(ChatColor.stripColor(plainMessage));
