@@ -102,6 +102,7 @@
 				<resources>
 					<resource>
 						<targetPath>.</targetPath>
+						<filtering>true</filtering>
 						<directory>src/test/resources</directory>
 					</resource>
 				</resources>
