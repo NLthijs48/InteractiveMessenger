@@ -29,7 +29,7 @@ A format for text in config files to make use of the fancy Minecraft chat featur
       <dependency>
         <groupId>me.wiefferink</groupId>
         <artifactId>interactivemessenger</artifactId>
-        <version>1.0</version>
+        <version>1.1-SNAPSHOT</version>
       </dependency>
     </dependencies>
     ```
