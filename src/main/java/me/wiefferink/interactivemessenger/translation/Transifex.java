@@ -1,11 +1,22 @@
 package me.wiefferink.interactivemessenger.translation;
 
-import me.wiefferink.interactivemessenger.processing.Message;
+import me.wiefferink.interactivemessenger.Log;
+import me.wiefferink.interactivemessenger.parsers.YamlParser;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.bukkit.configuration.file.YamlConfiguration;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Convert to and from a format suitable for Transifex (online collaborative translation platform)
@@ -39,12 +50,12 @@ public class Transifex {
 			warn("Could not convert Transifix file, it does not exist");
 			return false;
 		}
-		Message.info("Transifex conversion of", inputFile.getAbsolutePath());
+		Log.info("Transifex conversion of", inputFile.getAbsolutePath());
 
 		File newFile = new File(inputFile.getAbsolutePath()+".new");
 		try(
-				BufferedReader reader = new BufferedReader(new FileReader(inputFile));
-				BufferedWriter writer = new BufferedWriter(new FileWriter(newFile))
+				BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile), StandardCharsets.UTF_8));
+				BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(newFile), StandardCharsets.UTF_8))
 		) {
 			// Create target file
 			newFile.createNewFile();
@@ -133,7 +144,97 @@ public class Transifex {
 			oldFile.renameTo(inputFile); // Try to recover original file
 			return false;
 		}
-		Message.info("Converted "+inputFile.getName()+" from the Transifex layout to the AreaShop layout, original saved in "+oldFile.getName());
+		Log.info("Converted " + inputFile.getName() + " from the Transifex layout to the AreaShop layout, original saved in " + oldFile.getName());
+		return true;
+	}
+
+	/**
+	 * Convert source language to format compatible for upload to transifex
+	 * @param inputFile    File to read the language file from
+	 * @param outputFile   File to output converted language file to
+	 * @param languageCode Languagecode as used on Transifex
+	 */
+	public static boolean exportTo(File inputFile, File outputFile, String languageCode) {
+		try(
+				BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(inputFile), StandardCharsets.UTF_8));
+				BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile), StandardCharsets.UTF_8))
+		) {
+			// Header indicating the contained language to Transifex
+			writer.write("\"" + languageCode + "\":");
+			writer.newLine();
+
+			// Add all lines
+			String next = reader.readLine();
+			List<String> message = new ArrayList<>();
+			int lineCount = 0;
+			while(next != null) {
+				lineCount++;
+				String line = next;
+				next = reader.readLine();
+				// Strip UTF-8 BOM marker
+				if(lineCount == 1 && line.length() > 0 && line.charAt(0) == 0xFEFF) {
+					line = line.substring(1);
+				}
+
+				String trimmed = line.trim();
+				// Ignore comments
+				if(line.startsWith("#")) {
+					continue;
+				}
+
+				// Ignore empty lines
+				if(line.isEmpty()) {
+					continue;
+				}
+
+				// Part of a list of strings (an InteractiveMessage)
+				if(trimmed.startsWith("- ")) {
+					// Trim the list identifier
+					trimmed = trimmed.substring(2);
+
+					// Trim quotes from the message
+					if(trimmed.length() > 0 && trimmed.charAt(0) == '"' && trimmed.charAt(trimmed.length() - 1) == '"') {
+						trimmed = trimmed.substring(1, trimmed.length() - 1);
+					}
+
+					// Replace spaces in front of special lines by tabs (Transifex ignores spaces, while tabs show nicely, helping with easy translation)
+					if(YamlParser.isTaggedInteractive(trimmed)) {
+						trimmed = "\\t" + trimmed.replaceAll("^\\s+", "");
+					}
+					message.add(trimmed);
+				} else {
+					// Last message complete, write it to the result
+					if(message.size() > 0) {
+						String result = message.remove(0);
+						// Trim the " at the end
+						if(result.endsWith("\"")) {
+							result = result.substring(0, result.length() - 1);
+						} else {
+							result += " \"";
+						}
+
+						for(String messagePart : message) {
+							// Add newlines between parts
+							if(!result.endsWith("\"")) {
+								result += "\\n";
+							}
+							result += messagePart;
+						}
+
+						writer.write("  " + result + "\"");
+						writer.newLine();
+					}
+
+					// Start next message
+					message.clear();
+					message.add(trimmed);
+				}
+			}
+		} catch(IOException e) {
+			warn("Reformatting from '" + inputFile.getAbsolutePath() + "' to '" + outputFile.getAbsolutePath() + "' failed:", ExceptionUtils.getStackTrace(e));
+			return false;
+		}
+
 		return true;
 	}
 
@@ -142,6 +243,6 @@ public class Transifex {
 	 * @param message The message to print
 	 */
 	private static void warn(String... message) {
-		Message.warn("[Transifex language file conversion]", StringUtils.join(message, " "));
+		Log.warn("[Transifex language file conversion]", StringUtils.join(message, " "));
 	}
 }

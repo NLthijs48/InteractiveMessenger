@@ -4,10 +4,21 @@ import me.wiefferink.interactivemessenger.generators.ConsoleGenerator;
 import me.wiefferink.interactivemessenger.message.InteractiveMessage;
 import me.wiefferink.interactivemessenger.message.InteractiveMessagePart;
 import me.wiefferink.interactivemessenger.message.TextMessagePart;
-import me.wiefferink.interactivemessenger.message.enums.*;
+import me.wiefferink.interactivemessenger.message.enums.Click;
+import me.wiefferink.interactivemessenger.message.enums.Color;
+import me.wiefferink.interactivemessenger.message.enums.Control;
+import me.wiefferink.interactivemessenger.message.enums.Format;
+import me.wiefferink.interactivemessenger.message.enums.Hover;
 import org.bukkit.ChatColor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -352,7 +363,7 @@ public class YamlParser {
 	 * @param line The line to check
 	 * @return true if the line is interactive, false when it is a text line
 	 */
-	private static boolean isTaggedInteractive(String line) {
+	public static boolean isTaggedInteractive(String line) {
 		return getInteractiveTag(line) != null;
 	}
 

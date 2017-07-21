@@ -4,10 +4,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
+import me.wiefferink.interactivemessenger.Log;
 import me.wiefferink.interactivemessenger.generators.TellrawGenerator;
 import me.wiefferink.interactivemessenger.message.InteractiveMessage;
 import me.wiefferink.interactivemessenger.parsers.YamlParser;
-import me.wiefferink.interactivemessenger.testing.Log;
 import me.wiefferink.interactivemessenger.testing.parsergenerator.ParserGeneratorTestInput;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.bukkit.Bukkit;
@@ -92,7 +92,7 @@ public class TestCase implements Comparable<TestCase> {
 				tellRawJsonOutput = gson.fromJson(jsonMessage, JsonElement.class);
 				testRun.console("Message structure:", parsedMessage);
 				testRun.console("Output line", line+":");
-				Log.printIndented(2, gson.toJson(tellRawJsonOutput));
+				Log.infoIndent(2, gson.toJson(tellRawJsonOutput));
 				result &= Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw "+testRun.getTester().getName()+" "+jsonMessage);
 			} catch(JsonSyntaxException e) {
 				result = false;

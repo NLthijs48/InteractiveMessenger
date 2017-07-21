@@ -1,15 +1,27 @@
 package me.wiefferink.interactivemessenger.source;
 
 import com.google.common.base.Charsets;
+import me.wiefferink.interactivemessenger.Log;
 import me.wiefferink.interactivemessenger.processing.Message;
 import me.wiefferink.interactivemessenger.translation.Transifex;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -73,7 +85,7 @@ public class LanguageManager implements MessageProvider {
 		File langFolder;
 		if(!languageFolder.exists()) {
 			if(!languageFolder.mkdirs()) {
-				Message.warn("Could not create language directory: "+languageFolder.getAbsolutePath());
+				Log.warn("Could not create language directory: " + languageFolder.getAbsolutePath());
 				return;
 			}
 		}
@@ -102,14 +114,14 @@ public class LanguageManager implements MessageProvider {
 							output.write(bytes, 0, read);
 						}
 					} catch(IOException e) {
-						Message.warn("Something went wrong saving a default language file: "+targetFile.getAbsolutePath());
+						Log.warn("Something went wrong saving a default language file: " + targetFile.getAbsolutePath());
 					}
 				}
 			}
 		} catch(URISyntaxException e) {
-			Message.error("Failed to find location of jar file:", ExceptionUtils.getStackTrace(e));
+			Log.error("Failed to find location of jar file:", ExceptionUtils.getStackTrace(e));
 		} catch(IOException e) {
-			Message.error("Failed to read zip file:", ExceptionUtils.getStackTrace(e));
+			Log.error("Failed to read zip file:", ExceptionUtils.getStackTrace(e));
 		}
 	}
 
@@ -140,7 +152,7 @@ public class LanguageManager implements MessageProvider {
 			// Detect empty language files, happens when the YAML parsers prints an exception (it does return an empty YamlConfiguration though)
 			YamlConfiguration ymlFile = YamlConfiguration.loadConfiguration(reader);
 			if(ymlFile.getKeys(false).isEmpty()) {
-				Message.warn("Language file "+key+".yml has zero messages.");
+				Log.warn("Language file " + key + ".yml has zero messages.");
 				return result;
 			}
 
@@ -157,13 +169,13 @@ public class LanguageManager implements MessageProvider {
 				convertFromTransifex = true;
 			}
 		} catch(IOException e) {
-			Message.warn("Could not load language file: "+file.getAbsolutePath());
+			Log.warn("Could not load language file: " + file.getAbsolutePath());
 		}
 
 		// Do conversion (after block above closed the reader)
 		if(convertFromTransifex) {
 			if(!Transifex.convertFrom(file)) {
-				Message.warn("Failed to convert "+file.getName()+" from the Transifex layout to the AreaShop layout, check the errors above");
+				Log.warn("Failed to convert " + file.getName() + " from the Transifex layout to the AreaShop layout, check the errors above");
 			}
 			return loadLanguage(key, false);
 		}

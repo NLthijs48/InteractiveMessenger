@@ -1,5 +1,6 @@
 package me.wiefferink.interactivemessenger.processing;
 
+import me.wiefferink.interactivemessenger.Log;
 import me.wiefferink.interactivemessenger.generators.ConsoleGenerator;
 import me.wiefferink.interactivemessenger.generators.TellrawGenerator;
 import me.wiefferink.interactivemessenger.parsers.YamlParser;
@@ -78,7 +79,7 @@ public class Message {
 	 */
 	public static void init(MessageProvider provider, Logger theLogger) {
 		messageProvider = provider;
-		logger = theLogger;
+		Log.setLogger(logger);
 	}
 
 	/**
@@ -153,11 +154,9 @@ public class Message {
 	 * Get the message with all replacements done
 	 * @param limit the limit to hold to
 	 * @return Message as a list
+	 * @throws ReplacementLimitReachedException when the limit is reached
 	 */
-	private List<String> get(Limit limit) {
-		if(limit.reached()) {
-			return new ArrayList<>();
-		}
+	private List<String> get(Limit limit) throws ReplacementLimitReachedException {
 		doReplacements(limit);
 		return message;
 	}
@@ -168,6 +167,16 @@ public class Message {
 	 */
 	public String getSingle() {
 		doReplacements();
+		return StringUtils.join(message, "");
+	}
+
+	/**
+	 * Get the message with all replacements done
+	 * @return Message as a string
+	 * @throws ReplacementLimitReachedException when the limit is reached
+	 */
+	public String getSingle(Limit limit) throws ReplacementLimitReachedException {
+		doReplacements(limit);
 		return StringUtils.join(message, "");
 	}
 
@@ -336,7 +345,7 @@ public class Message {
 					List<String> jsonMessages = TellrawGenerator.generate(YamlParser.parse(message));
 					for(String jsonMessage : jsonMessages) {
 						if(jsonMessage.length() > MAXIMUMJSONLENGTH) {
-							error("Message with key", key, "could not be send, results in a JSON string that is too big to send to the client, start of the message:", getMessageStart(this, 200));
+							Log.error("Message with key", key, "could not be send, results in a JSON string that is too big to send to the client, start of the message:", getMessageStart(this, 200));
 							return this;
 						}
 						result &= Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "tellraw "+((Player)target).getName()+" "+jsonMessage);
@@ -345,7 +354,7 @@ public class Message {
 					fancyWorks = result;
 				} catch(Exception e) {
 					fancyWorks = false;
-					error("Sending fancy message did not work, falling back to plain messages. Message key:", key, ", error:", ExceptionUtils.getStackTrace(e));
+					Log.error("Sending fancy message did not work, falling back to plain messages. Message key:", key, ", error:", ExceptionUtils.getStackTrace(e));
 				}
 			}
 			if(sendPlain) { // Fancy messages disabled or broken
@@ -368,10 +377,10 @@ public class Message {
 					((BufferedWriter)target).write(ChatColor.stripColor(plainMessage));
 					((BufferedWriter)target).newLine();
 				} catch(IOException e) {
-					warn("Exception while writing to BufferedWriter:", ExceptionUtils.getStackTrace(e));
+					Log.warn("Exception while writing to BufferedWriter:", ExceptionUtils.getStackTrace(e));
 				}
 			} else {
-				warn("Could not send message (key: "+key+") because the target ("+target.getClass().getName()+") is not recognized, message: "+plainMessage);
+				Log.warn("Could not send message (key: " + key + ") because the target (" + target.getClass().getName() + ") is not recognized, message: " + plainMessage);
 			}
 		}
 		return this;
@@ -401,7 +410,7 @@ public class Message {
 	private Message setMessageFromKey(String key) {
 		this.key = key;
 		if(messageProvider == null) {
-			error("Tried to get message with key", key+", but there is no MessageProvider!");
+			Log.error("Tried to get message with key", key + ", but there is no MessageProvider!");
 		} else {
 			this.setMessage(messageProvider.getMessage(key));
 		}
@@ -425,20 +434,22 @@ public class Message {
 	 */
 	public Message doReplacements() {
 		Limit limit = new Limit(REPLACEMENTLIMIT, this);
-		doReplacements(limit);
+
+		try {
+			doReplacements(limit);
+		} catch(ReplacementLimitReachedException e) {
+			// Limit should have logged the error to the console already
+		}
+
 		//depthPrint(limit, "Replacing took", System.currentTimeMillis()-limit.started, "milliseconds", this);
 		return this;
 	}
 
-	private Message doReplacements(Limit limit) {
-		if(limit.reached()) {
-			return this;
-		}
-
+	private Message doReplacements(Limit limit) throws ReplacementLimitReachedException {
 		limit.depth++;
 
 		//depthPrint(limit, ">>> doReplacements:", message, limit);
-		// Replace LANGUAGE_VARIABLE_PATTERN until they are all gone, or when the limit is reached
+		// Replace LANGUAGE_VARIABLE_PATTERN until they are all gone, nothing changes anymore or when the limit is reached
 		try {
 			List<String> outerOriginal;
 			// Repeat replacements for if language replacements introduced new LANGUAGE_VARIABLE_PATTERN
@@ -446,17 +457,11 @@ public class Message {
 			do {
 				outerOriginal = new ArrayList<>(message);
 				List<String> innerOriginal;
-				limit.left--;
-				if(limit.reached()) {
-					break;
-				}
+				limit.decrease();
 
 				// Do argument replacements
 				do {
 					innerOriginal = new ArrayList<>(message);
-					if(limit.reached()) {
-						break;
-					}
 					replaceArgumentVariables(limit);
 				} while(!message.equals(innerOriginal));
 
@@ -464,9 +469,6 @@ public class Message {
 				if(doLanguageReplacements) {
 					do {
 						innerOriginal = new ArrayList<>(message);
-						if(limit.reached()) {
-							break;
-						}
 						replaceLanguageVariables(limit);
 					} while(!message.equals(innerOriginal));
 				}
@@ -476,12 +478,14 @@ public class Message {
 
 			// Increase limit by one to compensate for the last round where no replacements have been done
 			if(!limit.reached() && fullRounds >= 1) {
-				limit.left++;
+				limit.increase();
 			}
 		} catch(StackOverflowError e) {
 			limit.left = 0;
 			limit.notified = true;
-			error("Too many recursive replacements for message with key: "+limit.message.key+" (probably includes itself as replacement), start of the message: "+getMessageStart(limit.message, 200));
+			Log.error("Too many recursive replacements for message with key: " + limit.message.key + " (probably includes itself as replacement), start of the message: " + getMessageStart(limit.message, 200));
+			// Trigger exception
+			limit.decrease();
 		}
 		limit.depth--;
 		return this;
@@ -492,11 +496,12 @@ public class Message {
 	 * The arguments to apply as replacements:
 	 * - If it is a GeneralRegion the replacements of the region will be applied
 	 * - Else the parameter will replace its number surrounded with VARIABLE_START and VARIABLE_END
+	 * @throws ReplacementLimitReachedException when the limit is reached
 	 */
-	private void replaceArgumentVariables(Limit limit) {
+	private void replaceArgumentVariables(Limit limit) throws ReplacementLimitReachedException {
 		limit.depth++;
 		//depthPrint(limit, ">>> replaceArgumentVariables:", message, limit);
-		if(message == null || message.size() == 0 || replacements == null || limit.reached()) {
+		if(message == null || message.size() == 0 || replacements == null) {
 			//depthPrint(limit, "quick return");
 			limit.depth--;
 			return;
@@ -563,17 +568,13 @@ public class Message {
 
 								// Insert inline
 								if(mParam.inline) {
-									message.set(i, insert(line, mParam.getSingle(), matcher.start(), matcher.end()));
+									message.set(i, insert(line, mParam.getSingle(limit), matcher.start(), matcher.end()));
 								}
 
 								// Insert as message
 								else {
 									List<String> insertMessage = ((Message)param).get(limit);
 									//depthPrint(limit, "insert message resolved:", ((Message)param).message);
-									if(limit.reached()) {
-										limit.depth--;
-										return;
-									}
 									YamlParser.insertMessage(message, insertMessage, i, matcher.start(), matcher.end());
 									// Skip to end of insert
 									i = message.size()-startDiff;
@@ -618,11 +619,12 @@ public class Message {
 
 	/**
 	 * Replace all language LANGUAGE_VARIABLE_PATTERN in a message
+	 * @throws ReplacementLimitReachedException when the limit is reached
 	 */
-	private void replaceLanguageVariables(Limit limit) {
+	private void replaceLanguageVariables(Limit limit) throws ReplacementLimitReachedException {
 		limit.depth++;
 		//depthPrint(limit, ">>> replaceLanguageVariables:", message, limit);
-		if(message == null || message.size() == 0 || limit.reached()) {
+		if(message == null || message.size() == 0) {
 			//depthPrint(limit, "quick return");
 			limit.depth--;
 			return;
@@ -663,10 +665,6 @@ public class Message {
 				// Insert message
 				int startDiff = message.size()-i;
 				List<String> insertMessage = insert.get(limit);
-				if(limit.reached()) {
-					limit.depth--;
-					return;
-				}
 				YamlParser.insertMessage(message, insertMessage, i, matcher.start(), matcher.end());
 				// Skip to end of insert
 				i = message.size()-startDiff;
@@ -705,21 +703,50 @@ public class Message {
 		}
 
 		/**
+		 * Decrease the limit
+		 * @throws ReplacementLimitReachedException when the limit hits zero
+		 */
+		public void decrease() throws ReplacementLimitReachedException {
+			this.left--;
+			if(left <= 0) {
+				if(!notified) {
+					notified = true;
+					Log.error("Reached replacement limit, probably has replacements loops, problematic message key: " + message.key + ", first characters of the message: " + getMessageStart(message, 200));
+				}
+				throw new ReplacementLimitReachedException(this);
+			}
+		}
+
+		/**
+		 * Increase the limit
+		 */
+		public void increase() {
+			this.left++;
+		}
+
+		/**
 		 * Check if the limit is reached
 		 * @return true if the limit is reached, otherwise false
 		 */
 		public boolean reached() {
-			boolean reached = left <= 0;
-			if(reached && !notified) {
-				notified = true;
-				error("Reached replacement limit, probably has replacements loops, problematic message key: "+message.key+", first characters of the message: "+getMessageStart(message, 200));
-			}
-			return reached;
+			return left <= 0;
 		}
 
 		@Override
 		public String toString() {
-			return "Limit(left: "+left+", notified: "+notified+", depth: "+depth+", message.key: "+message.key+")";
+			return "Limit(left: "+left+", notified: "+notified+", depth: "+depth+ ", message.key: " + message.key + ")";
+		}
+	}
+
+	public class ReplacementLimitReachedException extends Exception {
+		private Limit limit;
+
+		public ReplacementLimitReachedException(Limit limit) {
+			this.limit = limit;
+		}
+
+		public Limit getLimit() {
+			return limit;
 		}
 	}
 
@@ -744,43 +771,6 @@ public class Message {
 	 * @param message The message to print indented
 	 */
 	private static void depthPrint(Limit limit, Object... message) {
-		String indent = "";
-		for(int i = 0; i < limit.depth; i++) {
-			indent += "  ";
-		}
-		Object[] iMessage = new Object[message.length+1];
-		iMessage[0] = indent;
-		System.arraycopy(message, 0, iMessage, 1, message.length);
-		info(iMessage);
-	}
-
-	/**
-	 * Print information to the console
-	 * @param message The message to print
-	 */
-	public static void info(Object... message) {
-		if(logger != null) {
-			logger.info(StringUtils.join(message, " "));
-		}
-	}
-
-	/**
-	 * Print a warning to the console
-	 * @param message The message to print
-	 */
-	public static void warn(Object... message) {
-		if(logger != null) {
-			logger.warning(StringUtils.join(message, " "));
-		}
-	}
-
-	/**
-	 * Print an error to the console
-	 * @param message The messagfe to print
-	 */
-	public static void error(Object... message) {
-		if(logger != null) {
-			logger.severe(StringUtils.join(message, " "));
-		}
+		Log.infoIndent(limit.depth, message);
 	}
 }

@@ -1,7 +1,7 @@
 package me.wiefferink.interactivemessenger.testing.parsergenerator;
 
 import junit.framework.TestSuite;
-import me.wiefferink.interactivemessenger.testing.Log;
+import me.wiefferink.interactivemessenger.Log;
 
 import java.io.File;
 
