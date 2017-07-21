@@ -464,6 +464,7 @@ public class Message {
 				do {
 					innerOriginal = new ArrayList<>(message);
 					replaceArgumentVariables(limit);
+					limit.decrease();
 				} while(!message.equals(innerOriginal));
 
 				// Do language replacements
@@ -471,6 +472,7 @@ public class Message {
 					do {
 						innerOriginal = new ArrayList<>(message);
 						replaceLanguageVariables(limit);
+						limit.decrease();
 					} while(!message.equals(innerOriginal));
 				}
 
@@ -588,7 +590,7 @@ public class Message {
 								//depthPrint(limit, "insert string:", param.toString());
 								message.set(i, insert(line, YamlParser.escape(param.toString()), matcher.start(), matcher.end()));
 							}
-							break; // Maximum of one replacement
+							break; // Maximum of one replacement`
 						}
 						number++;
 					}
