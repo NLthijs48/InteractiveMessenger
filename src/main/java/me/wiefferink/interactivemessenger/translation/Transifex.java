@@ -153,6 +153,7 @@ public class Transifex {
 	 * @param inputFile    File to read the language file from
 	 * @param outputFile   File to output converted language file to
 	 * @param languageCode Languagecode as used on Transifex
+	 * @return true if it worked orrectly, otherwise false
 	 */
 	public static boolean exportTo(File inputFile, File outputFile, String languageCode) {
 		try(

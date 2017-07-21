@@ -172,6 +172,7 @@ public class Message {
 
 	/**
 	 * Get the message with all replacements done
+	 * @param limit Limit to use while processing
 	 * @return Message as a string
 	 * @throws ReplacementLimitReachedException when the limit is reached
 	 */
