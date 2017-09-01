@@ -26,7 +26,6 @@ public class Message {
 	// CONFIGURATION
 	private static boolean useInteractiveMessages = true;
 	private static boolean useColorsInConsole = false;
-	private static Logger logger = null;
 	private static MessageProvider messageProvider = null;
 
 	// Define the symbols used for variables
@@ -75,9 +74,9 @@ public class Message {
 	/**
 	 * Initialize the Message class
 	 * @param provider The provider to use for getting messages based on keys
-	 * @param theLogger The logger to use for logging warning and error messages
+	 * @param logger The logger to use for logging warning and error messages
 	 */
-	public static void init(MessageProvider provider, Logger theLogger) {
+	public static void init(MessageProvider provider, Logger logger) {
 		messageProvider = provider;
 		Log.setLogger(logger);
 	}
