@@ -32,7 +32,7 @@ public class Message {
 	public static final String VARIABLE_START = "%";
 	public static final String VARIABLE_END = "%";
 	public static final String LANGUAGE_KEY_PREFIX = "lang:";
-	public static final Pattern VARIABLE_PATTERN = Pattern.compile(Pattern.quote(VARIABLE_START) + "[a-zA-Z]+?" + Pattern.quote(VARIABLE_END));
+	public static final Pattern VARIABLE_PATTERN = Pattern.compile(Pattern.quote(VARIABLE_START) + "(?<name>[a-zA-Z]+)" + Pattern.quote(VARIABLE_END));
 	public static final Pattern LANGUAGE_VARIABLE_PATTERN = Pattern.compile(
 			Pattern.quote(VARIABLE_START) +
 					Pattern.quote(LANGUAGE_KEY_PREFIX) + "[a-zA-Z-]+?" +    // Language key
@@ -513,86 +513,76 @@ public class Message {
 			int number = 0;
 			for(Object param : replacements) {
 				String line = message.get(i);
-				if(param != null) {
-					if(param instanceof ReplacementProvider) {
-						// Find the first non-escaped named variable
-						Matcher matcher = VARIABLE_PATTERN.matcher(line);
-						int startAt = 0;
-						while(matcher.find()) {
-							// Check for escaping
-							int beforeAt = matcher.start()-1;
-							if(beforeAt >= 0 && line.charAt(beforeAt) == YamlParser.ESCAPE_CHAR) {
-								//depthPrint(limit, "skipping named variable:", matcher.group(), limit);
-								continue;
-							}
-							//depthPrint(limit, "replacing named variable:", matcher.group());
 
-							// Insert replacement provided by the ReplacementProvider
-							Object replacement = ((ReplacementProvider)param).provideReplacement(matcher.group().substring(1, matcher.group().length()-1));
-							if(replacement != null) {
-								String result = "";
-								// Prefix
-								if(matcher.start() > 0) {
-									result += line.substring(0, matcher.start());
-								}
-								// Replacement
-								String add = replacement.toString();
-								result += add;
-								// Suffix
-								if(matcher.end() < line.length()) {
-									result += line.substring(matcher.end());
-								}
+				// Skip null, but increase index
+				if(param == null) {
+					number++;
+					continue;
+				}
 
-								message.set(i, result);
-								line = result;
-								int matcherStart = matcher.start();
-								matcher = VARIABLE_PATTERN.matcher(line);
-								matcher.region(matcherStart+add.length(), line.length());
-							}
-						}
-					} else {
-						// Find first non-escaped numbered variable
-						Matcher matcher = getIndexPattern(number).matcher(line);
-						while(matcher.find()) {
-							// Check for escaping
-							int beforeAt = matcher.start()-1;
-							if(beforeAt >= 0 && line.charAt(beforeAt) == YamlParser.ESCAPE_CHAR) {
-								//depthPrint(limit, "skipping indexed variable:", matcher.group(), limit);
-								continue;
-							}
-							//depthPrint(limit, "replacing indexed variable:", matcher.group());
+				// Match indexed or named variables
+				Matcher matcher;
+				boolean named;
+				if(param instanceof ReplacementProvider) {
+					matcher = VARIABLE_PATTERN.matcher(line);
+					named = true;
+				} else {
+					matcher = getIndexPattern(number).matcher(line);
+					named = false;
+				}
 
-							// Insert another Message
-							if(param instanceof Message) {
-								int startDiff = message.size()-i;
-								//depthPrint(limit, "insert message raw:", ((Message)param).message);
-								Message mParam = (Message)param;
+				// Find an replace
+				while(matcher.find()) {
 
-								// Insert inline
-								if(mParam.inline) {
-									message.set(i, insert(line, mParam.getSingle(limit), matcher.start(), matcher.end()));
-								}
-
-								// Insert as message
-								else {
-									List<String> insertMessage = ((Message)param).get(limit);
-									//depthPrint(limit, "insert message resolved:", ((Message)param).message);
-									YamlParser.insertMessage(message, insertMessage, i, matcher.start(), matcher.end());
-									// Skip to end of insert
-									i = message.size()-startDiff;
-								}
-							}
-
-							// Insert a simple string
-							else {
-								// Insert it inline, assuming this might be user input, therefore escaping it
-								//depthPrint(limit, "insert string:", param.toString());
-								message.set(i, insert(line, YamlParser.escape(param.toString()), matcher.start(), matcher.end()));
-							}
-							break; // Maximum of one replacement`
-						}
-						number++;
+					// Skip escaped matches
+					int beforeAt = matcher.start() - 1;
+					if(beforeAt >= 0 && line.charAt(beforeAt) == YamlParser.ESCAPE_CHAR) {
+						//depthPrint(limit, "skipping indexed variable:", matcher.group(), limit);
+						continue;
 					}
+					//depthPrint(limit, "replacing indexed variable:", matcher.group());
+
+					Object toInsert = param;
+					if(named) {
+						toInsert = ((ReplacementProvider) param).provideReplacement(matcher.group("name"));
+						// Skip if null
+						if(toInsert == null) {
+							break;
+						}
+					}
+
+					// Insert another Message
+					if(toInsert instanceof Message) {
+						int startDiff = message.size() - i;
+						//depthPrint(limit, "insert message raw:", ((Message)toInsert).message);
+						Message toInsertMessage = (Message) toInsert;
+
+						// Insert inline
+						if(toInsertMessage.inline) {
+							message.set(i, insert(line, toInsertMessage.getSingle(limit), matcher.start(), matcher.end()));
+						}
+
+						// Insert as message
+						else {
+							List<String> insertMessage = toInsertMessage.get(limit);
+							//depthPrint(limit, "insert message resolved:", ((Message)toInsert).message);
+							YamlParser.insertMessage(message, insertMessage, i, matcher.start(), matcher.end());
+							// Skip to end of insert
+							i = Math.max(0, message.size() - startDiff);
+						}
+					}
+
+					// Insert a simple string
+					else {
+						// Insert it inline, assuming this might be user input, therefore escaping it
+						//depthPrint(limit, "insert string:", toInsert.toString());
+						message.set(i, insert(line, YamlParser.escape(toInsert.toString()), matcher.start(), matcher.end()));
+					}
+					break; // Maximum of one replacement`
+				}
+
+				if(!named) {
+					number++;
 				}
 			}
 		}
