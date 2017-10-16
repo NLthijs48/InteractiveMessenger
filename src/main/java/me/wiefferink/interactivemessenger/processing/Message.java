@@ -211,7 +211,7 @@ public class Message {
 	 */
 	public boolean isEmpty() {
 		for(String part : message) {
-			if(!part.isEmpty()) {
+			if(part != null && !part.isEmpty()) {
 				return false;
 			}
 		}
@@ -424,7 +424,9 @@ public class Message {
 	 */
 	private Message setMessage(String message) {
 		List<String> list = new ArrayList<>();
-		list.add(message);
+		if(message != null) {
+			list.add(message);
+		}
 		return this.setMessage(list);
 	}
 
@@ -516,8 +518,10 @@ public class Message {
 
 				// Skip null, but increase index
 				if(param == null) {
-					number++;
-					continue;
+					Log.warn("null replacement for message", limit.message, "at index", number);
+
+					// Set param to an empty string to ensure the variable will be removed from the message (preventing loops)
+					param = "";
 				}
 
 				// Match indexed or named variables
