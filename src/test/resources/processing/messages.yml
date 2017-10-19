@@ -1,0 +1,40 @@
+########## MessageProvider
+# Simple
+single: "Hello world!"
+multiple:
+  - "Hello "
+  - "world!"
+# With newline, remove trailing blank lines, keep newline at the end
+multilineWithNewlines1: |
+  Hello world!
+  Second line
+
+# With newline, remove trailing blank lines, remove newline at the end
+multilineWithNewlines2: |-
+  Hello world!
+  Second line
+
+# With newline, with trailing blank lines, with newline at the end
+multilineWithNewlines3: |+
+  Hello world!
+  Second line
+
+# Without newline, remove trailing blank lines, keep newline at the end
+multilineWithoutNewlines1: >
+  Hello world!
+  More text
+
+# Without newline, remove trailing blank lines, remove newline at the end
+multilineWithoutNewlines2: >-
+  Hello world!
+  More text
+
+# Without newline, with trailing blank lines, with newline at the end
+multilineWithoutNewlines3: >+
+  Hello world!
+  More text
+
+# Empty line above is important
+
+########## Message
+
