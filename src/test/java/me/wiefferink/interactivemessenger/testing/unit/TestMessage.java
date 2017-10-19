@@ -12,7 +12,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Logger;
 
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
@@ -26,7 +25,7 @@ public class TestMessage {
 		URL resource = TestMessage.class.getClassLoader().getResource("processing/messages.yml");
 		assertNotNull("Resource file messages.yml not found in the jar", resource);
 		MessageProvider provider = new YAMLMessageProvider(new File(resource.getFile()));
-		Message.init(provider, Logger.getGlobal());
+		Message.init(provider, null);
 	}
 
 	@Test
