@@ -58,7 +58,7 @@ public class Message {
 	// Language variable used to insert a prefix
 	public static final String CHATLANGUAGEVARIABLE = "prefix";
 	// Maximum number of replacement rounds (the replaced value can have variables again)
-	public static final int REPLACEMENTLIMIT = 100;
+	public static final int REPLACEMENTLIMIT = 200;
 	// Limit of the client is 32767 for the complete message
 	public static final int MAXIMUMJSONLENGTH = 30000;
 	// If sending a fancy message does not work we disable it for this run of the server
@@ -386,6 +386,13 @@ public class Message {
 		return this;
 	}
 
+	/**
+	 * Get the key that has been used to initialize this message (if any)
+	 * @return Key used to create this message, or null if none
+	 */
+	public String getKey() {
+		return key;
+	}
 
 	// INTERNAL METHODS
 
@@ -447,7 +454,13 @@ public class Message {
 		return this;
 	}
 
-	private Message doReplacements(Limit limit) throws ReplacementLimitReachedException {
+	/**
+	 * Apply replacements to the message using a certain Limit (intended for internal and testing use)
+	 * @param limit Limit to apply
+	 * @return this
+	 * @throws ReplacementLimitReachedException When the limit has been hit before replacement is finished
+	 */
+	public Message doReplacements(Limit limit) throws ReplacementLimitReachedException {
 		limit.depth++;
 
 		//depthPrint(limit, ">>> doReplacements:", message, limit);
@@ -455,7 +468,6 @@ public class Message {
 		try {
 			List<String> outerOriginal;
 			// Repeat replacements for if language replacements introduced new LANGUAGE_VARIABLE_PATTERN
-			int fullRounds = 0;
 			do {
 				outerOriginal = new ArrayList<>(message);
 				List<String> innerOriginal;
@@ -464,26 +476,23 @@ public class Message {
 				// Do argument replacements
 				do {
 					innerOriginal = new ArrayList<>(message);
-					replaceArgumentVariables(limit);
 					limit.decrease();
+					replaceArgumentVariables(limit);
 				} while(!message.equals(innerOriginal));
+				limit.increase(); // Compensate last round that did nothing
 
 				// Do language replacements
 				if(doLanguageReplacements) {
 					do {
 						innerOriginal = new ArrayList<>(message);
-						replaceLanguageVariables(limit);
 						limit.decrease();
+						replaceLanguageVariables(limit);
 					} while(!message.equals(innerOriginal));
 				}
-
-				fullRounds++;
+				limit.increase(); // Compensate last round that did nothing
 			} while(!message.equals(outerOriginal));
+			limit.increase(); // Compensate last round that did nothing
 
-			// Increase limit by one to compensate for the last round where no replacements have been done
-			if(!limit.reached() && fullRounds >= 1) {
-				limit.increase();
-			}
 		} catch(StackOverflowError e) {
 			limit.left = 0;
 			limit.notified = true;
@@ -675,85 +684,13 @@ public class Message {
 		return "Message(key:"+key+", message:"+message+")";
 	}
 
-
-	/**
-	 * Class to store a limit
-	 */
-	private class Limit {
-		public int left;
-		public int depth;
-		public boolean notified = false;
-		public Message message;
-		public long started;
-
-		/**
-		 * Set the initial limit
-		 * @param count The limit to use
-		 * @param message The message this limit is started for
-		 */
-		public Limit(int count, Message message) {
-			this.left = count;
-			this.depth = 0;
-			this.message = message;
-			this.started = System.currentTimeMillis();
-		}
-
-		/**
-		 * Decrease the limit
-		 * @throws ReplacementLimitReachedException when the limit hits zero
-		 */
-		public void decrease() throws ReplacementLimitReachedException {
-			this.left--;
-			if(left <= 0) {
-				if(!notified) {
-					notified = true;
-					Log.error("Reached replacement limit, probably has replacements loops, problematic message key: " + message.key + ", first characters of the message: " + getMessageStart(message, 200));
-				}
-				throw new ReplacementLimitReachedException(this);
-			}
-		}
-
-		/**
-		 * Increase the limit
-		 */
-		public void increase() {
-			this.left++;
-		}
-
-		/**
-		 * Check if the limit is reached
-		 * @return true if the limit is reached, otherwise false
-		 */
-		public boolean reached() {
-			return left <= 0;
-		}
-
-		@Override
-		public String toString() {
-			return "Limit(left: "+left+", notified: "+notified+", depth: "+depth+ ", message.key: " + message.key + ")";
-		}
-	}
-
-	public class ReplacementLimitReachedException extends Exception {
-		private Limit limit;
-
-		public ReplacementLimitReachedException(Limit limit) {
-			this.limit = limit;
-		}
-
-		public Limit getLimit() {
-			return limit;
-		}
-	}
-
-
 	/**
 	 * Get a start of the message with a maximum length
 	 * @param message	   The message
 	 * @param maximumLength The maximum length to return
 	 * @return The start of the message with at most maximumLength characters
 	 */
-	private static String getMessageStart(Message message, int maximumLength) {
+	public static String getMessageStart(Message message, int maximumLength) {
 		String messageStart = "";
 		for(int i = 0; i < message.getRaw().size() && messageStart.length() < maximumLength; i++) {
 			messageStart += message.getRaw().get(i).substring(0, Math.min(maximumLength, message.getRaw().get(i).length()));

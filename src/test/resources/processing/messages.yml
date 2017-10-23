@@ -37,4 +37,13 @@ multilineWithoutNewlines3: >+
 # Empty line above is important
 
 ########## Message
-
+limit-hello: "hello"
+limit-world: "world"
+limit-no: "A message with an insertion: %lang:limit-hello% %lang:limit-world%"
+limit-leftRecursive: "%lang:limit-leftRecursive% Hello world!"
+limit-rightRecursive: "Hello world! %lang:limit-rightRecursive%"
+limit-leftIndirectRecursive: "%lang:limit-leftIndirectRecursiveLoop% Hello world!"
+limit-rightIndirectRecursive: "Hello world! %lang:limit-rightIndirectRecursiveLoop%"
+limit-leftIndirectRecursiveLoop: "%lang:limit-leftIndirectRecursive% Hello world!"
+limit-rightIndirectRecursiveLoop: "Hello world! %lang:limit-rightIndirectRecursive%"
+limit-arg: "argument: %0%"

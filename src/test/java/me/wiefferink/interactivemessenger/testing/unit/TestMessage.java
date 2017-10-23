@@ -1,10 +1,14 @@
 package me.wiefferink.interactivemessenger.testing.unit;
 
+import me.wiefferink.interactivemessenger.processing.Limit;
 import me.wiefferink.interactivemessenger.processing.Message;
+import me.wiefferink.interactivemessenger.processing.ReplacementLimitReachedException;
 import me.wiefferink.interactivemessenger.source.MessageProvider;
 import me.wiefferink.interactivemessenger.source.YAMLMessageProvider;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 
 import java.io.File;
 import java.net.URL;
@@ -19,6 +23,10 @@ import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertTrue;
 
 public class TestMessage {
+
+	// Max 10 seconds per method, to catch infinite recursion failures
+	@Rule
+	public Timeout globalTimeout = new Timeout(10 * 1000);
 
 	@BeforeClass
 	public static void initMessage() {
@@ -144,6 +152,34 @@ public class TestMessage {
 		assertEquals(Collections.singletonList("abc"), Message.empty().prepend(Message.fromString("abc")).getRaw());
 		assertEquals(Arrays.asList("a", "bc"), Message.empty().prepend(Message.fromList(Arrays.asList("a", "bc"))).getRaw());
 		assertEquals(Arrays.asList("de", "f", "a", "bc"), Message.empty().prepend(Message.fromList(Arrays.asList("a", "bc"))).prepend(Message.fromList(Arrays.asList("de", "f"))).getRaw());
+	}
+
+	private boolean reachesLimit(Message message) {
+		Limit limit = new Limit(100, message);
+		try {
+			message.doReplacements(limit);
+			System.out.println("reachesLimit: " + message.getKey() + " used " + (100 - limit.left));
+			return false;
+		} catch(ReplacementLimitReachedException e) {
+			return true;
+		}
+	}
+
+	@Test
+	public void replacementsLimit() {
+		// Language replacement
+		assertFalse(reachesLimit(Message.fromKey("limit-no")));
+
+		// Direct recursion
+		assertTrue(reachesLimit(Message.fromKey("limit-leftRecursive")));
+		assertTrue(reachesLimit(Message.fromKey("limit-rightRecursive")));
+
+		// Indirect recursion
+		assertTrue(reachesLimit(Message.fromKey("limit-leftIndirectRecursive")));
+		assertTrue(reachesLimit(Message.fromKey("limit-rightIndirectRecursive")));
+
+		// Argument recursion
+		assertTrue(reachesLimit(Message.fromKey("limit-arg").replacements(Message.fromKey("limit-arg"))));
 	}
 
 
