@@ -72,6 +72,7 @@ public class LanguageManager implements MessageProvider {
 			message = defaultLanguage.get(key);
 		}
 		if(message == null) {
+			Log.warn("Did not find message '" + key + "' in the current or default language");
 			return new ArrayList<>();
 		}
 		return new ArrayList<>(message);
