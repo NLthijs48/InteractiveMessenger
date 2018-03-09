@@ -219,12 +219,12 @@ public class Message {
 	}
 
 	/**
-	 * Add the default prefix to the message
+	 * Add the default prefix to the message (if the message is not empty)
 	 * @param doIt true if the prefix should be added, otherwise false
 	 * @return this
 	 */
 	public Message prefix(boolean doIt) {
-		if(doIt) {
+		if(doIt && !isEmpty()) {
 			message.add(0, VARIABLE_START + LANGUAGE_KEY_PREFIX + CHATLANGUAGEVARIABLE + VARIABLE_END);
 		}
 		return this;

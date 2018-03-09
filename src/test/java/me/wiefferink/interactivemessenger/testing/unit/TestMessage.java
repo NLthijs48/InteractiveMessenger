@@ -109,9 +109,11 @@ public class TestMessage {
 
 	@Test
 	public void prefix() {
-		assertFalse(Message.empty().prefix().isEmpty());
+		assertTrue(Message.empty().prefix().isEmpty());
 		assertTrue(Message.empty().prefix(false).isEmpty());
-		assertFalse(Message.empty().prefix(true).isEmpty());
+		assertTrue(Message.empty().prefix(true).isEmpty());
+		assertTrue(Message.fromString("abc").prefix().getSingleRaw().length() > 3);
+		assertTrue(Message.fromString("abc").prefix().getSingleRaw().endsWith("abc"));
 	}
 
 	@Test
